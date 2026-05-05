@@ -72,7 +72,8 @@ export default function Home() {
           </p>
 
           <a
-            href="#agendamento"
+            href="https://dottovip.com.br/mairalopoesmaltaria"
+            target="_blank"
             className="inline-block mt-8 bg-[#d6ccc2] px-8 py-4 rounded-full shadow-md hover:scale-105 transition"
           >
             Agendar agora
@@ -227,11 +228,11 @@ export default function Home() {
         </p>
 
         <a
-          href="https://wa.me/5519971023894"
+          href="https://dottovip.com.br/mairalopoesmaltaria"
           target="_blank"
           className="inline-block mt-8 bg-green-500 text-white px-8 py-4 rounded-full shadow-md hover:scale-105 transition"
         >
-          Agendar pelo WhatsApp
+          Agendar agora
         </a>
       </section>
 
