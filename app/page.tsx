@@ -6,13 +6,14 @@ export default function Home() {
     "/fotosobre4.jpg",
     "/fotosobre2.jpg",
     "/fotosobre5.jpg",
-    "/fotosobre2.jpg",
+    "/fotosobre3.jpg",
     "/fotosobre1.jpg",
   ];
 
   const [indexAtual, setIndexAtual] = useState(0);
   const [indexServicosCarousel, setIndexServicosCarousel] = useState(0);
   const [indexExperiencia, setIndexExperiencia] = useState(0);
+  const [indexRevista, setIndexRevista] = useState(0);
 
   const servicosCarousel = [
     {
@@ -82,6 +83,29 @@ export default function Home() {
     },
   ];
 
+  const revista = [
+    "/revista_pagina_01.jpg",
+    "/revista_pagina_02.jpg",
+    "/revista_pagina_03.jpg",
+    "/revista_pagina_04.jpg",
+    "/revista_pagina_05.jpg",
+    "/revista_pagina_06.jpg",
+    "/revista_pagina_07.jpg",
+    "/revista_pagina_08.jpg",
+    "/revista_pagina_09.jpg",
+    "/revista_pagina_10.jpg",
+    "/revista_pagina_11.jpg",
+    "/revista_pagina_12.jpg",
+    "/revista_pagina_13.jpg",
+    "/revista_pagina_14.jpg",
+    "/revista_pagina_15.jpg",
+    "/revista_pagina_16.jpg",
+    "/revista_pagina_17.jpg",
+    "/revista_pagina_18.jpg",
+    "/revista_pagina_19.jpg",
+    "/revista_pagina_20.jpg",
+  ];
+
   const precos: Array<{ servico: string; preco: string; promocao?: string }> = [
     { servico: "Mão", preco: "R$ 35,00" },
     { servico: "Pé", preco: "R$ 40,00" },
@@ -137,6 +161,14 @@ export default function Home() {
     );
   };
 
+  const proximoRevista = () => {
+    setIndexRevista((prev) => (prev + 1) % revista.length);
+  };
+
+  const anteriorRevista = () => {
+    setIndexRevista((prev) => (prev === 0 ? revista.length - 1 : prev - 1));
+  };
+
   return (
     <main className="bg-[#f5ebe0] text-[#3e3e3e] relative scroll-smooth">
 
@@ -147,6 +179,7 @@ export default function Home() {
           <a href="#sobre" className="hover:text-black">Sobre</a>
           <a href="#servicos" className="hover:text-black">Serviços</a>
           <a href="#experiencia" className="hover:text-black">Experiência</a>
+          <a href="#revista" className="hover:text-black">Revista</a>
           <a href="#precos" className="hover:text-black">Preços</a>
           <a href="#agendamento" className="hover:text-black">Agendamento</a>
         </div>
@@ -364,6 +397,58 @@ export default function Home() {
                 className={`h-3 w-3 rounded-full ${
                   i === indexExperiencia ? "bg-[#7a6a5a]" : "bg-[#d6ccc2]"
                 }`}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* REVISTA */}
+      <section id="revista" className="py-14 md:py-20 px-6 bg-[#fffaf5] text-center">
+        <div className="max-w-xl md:max-w-3xl mx-auto flex flex-col items-center">
+          <h2 className="text-xl md:text-2xl font-bold">Revista</h2>
+          <p className="mt-1 text-sm text-[#5c5c5c] leading-relaxed max-w-xl">
+            Navegue pelas páginas usando as setas ou os indicadores abaixo.
+          </p>
+
+          <div className="relative mt-6 rounded-2xl shadow-lg overflow-hidden bg-white w-full flex items-center justify-center">
+            <img
+              src={revista[indexRevista]}
+              alt={`Revista página ${indexRevista + 1}`}
+              className="w-full h-auto max-w-[320px] sm:max-w-[520px] md:max-w-[720px] object-contain mx-auto"
+            />
+
+            <button
+              onClick={anteriorRevista}
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow hover:bg-white"
+              aria-label="Página anterior"
+            >
+              ⟨
+            </button>
+
+            <button
+              onClick={proximoRevista}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow hover:bg-white"
+              aria-label="Próxima página"
+            >
+              ⟩
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 mt-3 text-sm">
+            <span className="text-[#5c5c5c]">Página</span>
+            <span className="font-semibold text-[#7a6a5a]">{indexRevista + 1} / {revista.length}</span>
+          </div>
+
+          <div className="flex justify-center gap-2 mt-3">
+            {revista.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIndexRevista(i)}
+                className={`w-2 h-2 rounded-full ${
+                  i === indexRevista ? "bg-[#7a6a5a]" : "bg-[#d6ccc2]"
+                }`}
+                aria-label={`Ir para página ${i + 1}`}
               />
             ))}
           </div>
