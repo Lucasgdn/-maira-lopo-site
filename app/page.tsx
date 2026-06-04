@@ -81,7 +81,7 @@ export default function Home() {
     },
   ];
 
-  const precos = [
+  const precos: Array<{ servico: string; preco: string; promocao?: string }> = [
     { servico: "Mão", preco: "R$ 35,00" },
     { servico: "Pé", preco: "R$ 40,00" },
     { servico: "Mão e Pé", preco: "R$ 75,00" },
@@ -454,6 +454,3 @@ export default function Home() {
     </main>
   );
 }
-
-
-
