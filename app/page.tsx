@@ -184,14 +184,14 @@ export default function Home() {
 
       {/* NAVBAR */}
       <nav className="fixed top-0 w-full bg-[#f5ebe0]/90 backdrop-blur-md shadow-sm z-50">
-        <div className="flex justify-center gap-6 py-4 text-sm md:text-base">
-          <a href="#inicio" onClick={(e) => handleNavClick(e, 'inicio')} className="hover:text-black">Início</a>
-          <a href="#sobre" onClick={(e) => handleNavClick(e, 'sobre')} className="hover:text-black">Sobre</a>
-          <a href="#servicos" onClick={(e) => handleNavClick(e, 'servicos')} className="hover:text-black">Serviços</a>
-          <a href="#experiencia" onClick={(e) => handleNavClick(e, 'experiencia')} className="hover:text-black">Experiência</a>
-          <a href="#revista" onClick={(e) => handleNavClick(e, 'revista')} className="hover:text-black">Revista</a>
-          <a href="#precos" onClick={(e) => handleNavClick(e, 'precos')} className="hover:text-black">Preços</a>
-          <a href="#agendamento" onClick={(e) => handleNavClick(e, 'agendamento')} className="hover:text-black">Agendamento</a>
+        <div className="flex gap-6 py-4 text-sm md:text-base overflow-x-auto whitespace-nowrap px-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <a href="#inicio" onClick={(e) => handleNavClick(e, 'inicio')} className="inline-block px-3 hover:text-black">Início</a>
+          <a href="#sobre" onClick={(e) => handleNavClick(e, 'sobre')} className="inline-block px-3 hover:text-black">Sobre</a>
+          <a href="#servicos" onClick={(e) => handleNavClick(e, 'servicos')} className="inline-block px-3 hover:text-black">Serviços</a>
+          <a href="#experiencia" onClick={(e) => handleNavClick(e, 'experiencia')} className="inline-block px-3 hover:text-black">Experiência</a>
+          <a href="#revista" onClick={(e) => handleNavClick(e, 'revista')} className="inline-block px-3 hover:text-black">Revista</a>
+          <a href="#precos" onClick={(e) => handleNavClick(e, 'precos')} className="inline-block px-3 hover:text-black">Preços</a>
+          <a href="#agendamento" onClick={(e) => handleNavClick(e, 'agendamento')} className="inline-block px-3 hover:text-black">Agendamento</a>
         </div>
       </nav>
 
