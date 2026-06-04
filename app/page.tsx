@@ -81,6 +81,15 @@ export default function Home() {
     },
   ];
 
+  const precos = [
+    { servico: "Só Esmaltação", preco: "R$ 20,00" },
+    { servico: "Cuticulagem Russa", preco: "R$ 40,00" },
+    { servico: "Manicure Tradicional", preco: "R$ 30,00", promocao: "R$ 35,00" },
+    { servico: "Pedicure", preco: "R$ 35,00", promocao: "R$ 40,00" },
+    { servico: "Esmaltação em Gel", preco: "R$ 110,00" },
+    { servico: "Alongamento de Unhas", preco: "R$ 190,00" },
+  ];
+
   useEffect(() => {
     const timer = setInterval(() => {
       setIndexAtual((prev) => (prev + 1) % imagens.length);
@@ -129,6 +138,7 @@ export default function Home() {
           <a href="#sobre" className="hover:text-black">Sobre</a>
           <a href="#servicos" className="hover:text-black">Serviços</a>
           <a href="#experiencia" className="hover:text-black">Experiência</a>
+          <a href="#precos" className="hover:text-black">Preços</a>
           <a href="#agendamento" className="hover:text-black">Agendamento</a>
         </div>
       </nav>
@@ -348,6 +358,55 @@ export default function Home() {
               />
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* PREÇOS */}
+      <section id="precos" className="py-28 px-6 bg-white text-center">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold">Tabela de Preços</h2>
+          <p className="mt-4 text-[#5c5c5c] leading-relaxed">
+            Conheça nossos valores e escolha o serviço perfeito para você.
+          </p>
+
+          <div className="mt-10 overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-[#7a6a5a] text-white">
+                  <th className="px-6 py-4 text-left font-semibold">Serviço</th>
+                  <th className="px-6 py-4 text-right font-semibold">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {precos.map((item, index) => (
+                  <tr
+                    key={index}
+                    className={`border-b border-[#e5d7cb] ${
+                      index % 2 === 0 ? "bg-[#fffaf5]" : "bg-white"
+                    } hover:bg-[#f5ebe0] transition`}
+                  >
+                    <td className="px-6 py-4 text-left text-[#3e3e3e]">
+                      {item.servico}
+                    </td>
+                    <td className="px-6 py-4 text-right text-[#7a6a5a] font-semibold">
+                      {item.promocao ? (
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-green-600">{item.preco}</span>
+                          <span className="text-sm line-through text-gray-400">{item.promocao}</span>
+                        </div>
+                      ) : (
+                        item.preco
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="mt-8 text-sm text-[#5c5c5c]">
+            💡 <strong>Dica:</strong> Combos e promoções disponíveis. Consulte pelo WhatsApp para detalhes!
+          </p>
         </div>
       </section>
 
