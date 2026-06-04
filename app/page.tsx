@@ -170,7 +170,7 @@ export default function Home() {
   };
 
   return (
-    <main className="bg-[#f5ebe0] text-[#3e3e3e] relative scroll-smooth">
+    <main className="bg-[#f5ebe0] text-[#3e3e3e] relative scroll-smooth" style={{ scrollPaddingTop: '80px' }}>
 
       {/* NAVBAR */}
       <nav className="fixed top-0 w-full bg-[#f5ebe0]/90 backdrop-blur-md shadow-sm z-50">
