@@ -82,12 +82,20 @@ export default function Home() {
   ];
 
   const precos = [
-    { servico: "Só Esmaltação", preco: "R$ 20,00" },
-    { servico: "Cuticulagem Russa", preco: "R$ 40,00" },
-    { servico: "Manicure Tradicional", preco: "R$ 30,00", promocao: "R$ 35,00" },
-    { servico: "Pedicure", preco: "R$ 35,00", promocao: "R$ 40,00" },
+    { servico: "Mão", preco: "R$ 35,00" },
+    { servico: "Pé", preco: "R$ 40,00" },
+    { servico: "Mão e Pé", preco: "R$ 75,00" },
     { servico: "Esmaltação em Gel", preco: "R$ 110,00" },
-    { servico: "Alongamento de Unhas", preco: "R$ 190,00" },
+    { servico: "Unhas Postiças Realistas", preco: "R$ 65,00" },
+    { servico: "Banho de Gel", preco: "R$ 100,00" },
+    { servico: "Alongamento", preco: "R$ 190,00" },
+    { servico: "Manutenção de Alongamento", preco: "R$ 150,00" },
+    { servico: "Spa das Mãos", preco: "R$ 35,00" },
+    { servico: "Spa Terapêutico", preco: "R$ 80,00" },
+    { servico: "Peeling de Calosidade", preco: "R$ 75,00" },
+    { servico: "Escalda Pés", preco: "R$ 35,00" },
+    { servico: "Esmaltação Tradicional Mão/Pé", preco: "R$ 20,00" },
+    { servico: "Blindagem", preco: "R$ 75,00" },
   ];
 
   useEffect(() => {
