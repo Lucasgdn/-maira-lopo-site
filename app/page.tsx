@@ -194,6 +194,7 @@ export default function Home() {
           backgroundSize: "40%",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center 12%",
+          scrollMarginTop: '80px',
         }}
       >
         <div className="absolute inset-0 bg-[#f5ebe0]/80"></div>
@@ -269,7 +270,7 @@ export default function Home() {
   </div>
 </section>
       {/* SOBRE */}
-      <section id="sobre" className="py-12 px-6 text-center">
+      <section id="sobre" className="py-12 px-6 text-center" style={{ scrollMarginTop: '80px' }}>
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-bold">Sobre a Maira Lopo</h2>
 
@@ -290,7 +291,7 @@ export default function Home() {
       </section>
 
       {/* SERVIÇOS */}
-      <section id="servicos" className="py-28 px-6 bg-white text-center">
+      <section id="servicos" className="py-28 px-6 bg-white text-center" style={{ scrollMarginTop: '80px' }}>
         <div className="max-w-5xl mx-auto flex flex-col items-center">
           <h2 className="text-3xl font-bold">Serviços</h2>
           <p className="mt-4 text-[#5c5c5c] leading-relaxed max-w-2xl">
@@ -360,7 +361,7 @@ export default function Home() {
       </section>
 
       {/* EXPERIÊNCIA */}
-      <section id="experiencia" className="py-28 px-6 text-center">
+      <section id="experiencia" className="py-28 px-6 text-center" style={{ scrollMarginTop: '80px' }}>
         <div className="max-w-5xl mx-auto flex flex-col items-center">
           <h2 className="text-3xl font-bold">Experiência</h2>
           <p className="mt-4 text-[#5c5c5c] leading-relaxed max-w-2xl">
@@ -404,7 +405,7 @@ export default function Home() {
       </section>
 
       {/* REVISTA */}
-      <section id="revista" className="py-14 md:py-20 px-6 bg-[#fffaf5] text-center">
+      <section id="revista" className="py-14 md:py-20 px-6 bg-[#fffaf5] text-center" style={{ scrollMarginTop: '80px' }}>
         <div className="max-w-xl md:max-w-3xl mx-auto flex flex-col items-center">
           <h2 className="text-xl md:text-2xl font-bold">Revista</h2>
           <p className="mt-1 text-sm text-[#5c5c5c] leading-relaxed max-w-xl">
@@ -456,7 +457,7 @@ export default function Home() {
       </section>
 
       {/* PREÇOS */}
-      <section id="precos" className="py-28 px-6 bg-white text-center">
+      <section id="precos" className="py-28 px-6 bg-white text-center" style={{ scrollMarginTop: '80px' }}>
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold">Tabela de Preços</h2>
           <p className="mt-4 text-[#5c5c5c] leading-relaxed">
@@ -505,7 +506,7 @@ export default function Home() {
       </section>
 
       {/* AGENDAMENTO */}
-      <section id="agendamento" className="py-28 bg-[#efe7df] px-6 text-center">
+      <section id="agendamento" className="py-28 bg-[#efe7df] px-6 text-center" style={{ scrollMarginTop: '80px' }}>
         <h2 className="text-3xl font-bold">Agende seu horário</h2>
 
         <p className="mt-4 text-[#5c5c5c]">
