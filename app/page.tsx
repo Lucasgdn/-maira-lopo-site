@@ -5,7 +5,8 @@ export default function Home() {
   const imagens = [
     "/fotosobre4.jpg",
     "/fotosobre2.jpg",
-    "/fotosobre3.jpg",
+    "/fotosobre5.jpg",
+    "/fotosobre2.jpg",
     "/fotosobre1.jpg",
   ];
 
