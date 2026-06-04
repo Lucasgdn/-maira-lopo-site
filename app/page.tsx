@@ -169,19 +169,29 @@ export default function Home() {
     setIndexRevista((prev) => (prev === 0 ? revista.length - 1 : prev - 1));
   };
 
+  const handleNavClick = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (!el) return;
+    const nav = document.querySelector("nav");
+    const navHeight = nav ? (nav.getBoundingClientRect().height) : 80;
+    const top = el.getBoundingClientRect().top + window.scrollY - navHeight - 8;
+    window.scrollTo({ top, behavior: "smooth" });
+  };
+
   return (
     <main className="bg-[#f5ebe0] text-[#3e3e3e] relative scroll-smooth" style={{ scrollPaddingTop: '80px' }}>
 
       {/* NAVBAR */}
       <nav className="fixed top-0 w-full bg-[#f5ebe0]/90 backdrop-blur-md shadow-sm z-50">
         <div className="flex justify-center gap-6 py-4 text-sm md:text-base">
-          <a href="#inicio" className="hover:text-black">Início</a>
-          <a href="#sobre" className="hover:text-black">Sobre</a>
-          <a href="#servicos" className="hover:text-black">Serviços</a>
-          <a href="#experiencia" className="hover:text-black">Experiência</a>
-          <a href="#revista" className="hover:text-black">Revista</a>
-          <a href="#precos" className="hover:text-black">Preços</a>
-          <a href="#agendamento" className="hover:text-black">Agendamento</a>
+          <a href="#inicio" onClick={(e) => handleNavClick(e, 'inicio')} className="hover:text-black">Início</a>
+          <a href="#sobre" onClick={(e) => handleNavClick(e, 'sobre')} className="hover:text-black">Sobre</a>
+          <a href="#servicos" onClick={(e) => handleNavClick(e, 'servicos')} className="hover:text-black">Serviços</a>
+          <a href="#experiencia" onClick={(e) => handleNavClick(e, 'experiencia')} className="hover:text-black">Experiência</a>
+          <a href="#revista" onClick={(e) => handleNavClick(e, 'revista')} className="hover:text-black">Revista</a>
+          <a href="#precos" onClick={(e) => handleNavClick(e, 'precos')} className="hover:text-black">Preços</a>
+          <a href="#agendamento" onClick={(e) => handleNavClick(e, 'agendamento')} className="hover:text-black">Agendamento</a>
         </div>
       </nav>
 
