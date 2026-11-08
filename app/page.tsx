@@ -112,7 +112,7 @@ export default function Home() {
     { servico: "Mão e Pé", preco: "R$ 80,00" },
     { servico: "Esmaltação em Gel", preco: "R$ 110,00" },
     { servico: "Unhas Postiças Realistas", preco: "R$ 65,00" },
-    { servico: "Banho de Gel", preco: "R$ 100,00" },
+    { servico: "Banho de Gel", preco: "R$ 130,00" },
     { servico: "Alongamento", preco: "R$ 190,00" },
     { servico: "Manutenção de Alongamento", preco: "R$ 150,00" },
     { servico: "Spa das Mãos", preco: "R$ 40,00" },
