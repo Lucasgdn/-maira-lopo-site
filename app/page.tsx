@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import BookingModal from "./lib/booking-modal";
 
@@ -209,6 +210,7 @@ export default function Home() {
           <a href="#revista" onClick={(e) => handleNavClick(e, 'revista')} className="inline-block px-3 hover:text-black">Revista</a>
           <a href="#precos" onClick={(e) => handleNavClick(e, 'precos')} className="inline-block px-3 hover:text-black">Procedimentos</a>
           <a href="#agendamento" onClick={(e) => handleNavClick(e, 'agendamento')} className="inline-block px-3 hover:text-black">Agendamento</a>
+          <Link href="/admin" className="inline-flex items-center rounded-full bg-[#7a6a5a] px-4 py-2 font-semibold text-white transition hover:bg-[#5c4a3f]">Entrar</Link>
         </div>
       </nav>
 
