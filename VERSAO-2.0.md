@@ -2,15 +2,15 @@
 
 ## Situacao atual
 
-A versao 2.0 da agenda propria esta publicada. As regras do Firestore e o deploy do site ja foram atualizados. Ainda falta validar em producao, de ponta a ponta, uma reserva real, um conflito simultaneo, um bloqueio e um cancelamento.
+A versao 2.0 da agenda propria esta publicada. As regras do Firestore e o deploy do site ja foram atualizados. Foram verificados o build, a exibicao publica da ajuda, a versao nos rodapes e os links contextualizados para o WhatsApp. Ainda falta validar em producao, de ponta a ponta, uma reserva real, um conflito simultaneo, um bloqueio e um cancelamento.
 
 ## Objetivo da versao 2.0
 
 Criar uma agenda integrada ao site com procedimentos, duracoes, precos, profissionais, datas, horarios e confirmacao pelo WhatsApp.
 
-O painel administrativo em `/admin` usa Firebase Authentication, e-mail e senha, verifica uma lista de administradores no Firestore e oferece uma agenda semanal inspirada no Outlook, com eventos de bloqueio, configuracao da rotina por dia da semana e reservas de clientes. Confirmar ou cancelar uma reserva atualiza a agenda e abre uma mensagem pronta no WhatsApp para a Maira revisar e enviar. O passo a passo esta em [FIREBASE-SETUP.md](./FIREBASE-SETUP.md).
+O painel administrativo em `/admin` usa Firebase Authentication, e-mail e senha, verifica uma lista de administradores no Firestore e oferece uma agenda semanal inspirada no Outlook, com eventos de bloqueio, configuracao da rotina por dia da semana e reservas de clientes. Confirmar ou cancelar uma reserva atualiza a agenda e abre uma mensagem pronta no WhatsApp para a Maira revisar e enviar. Se a abertura automatica for bloqueada, o painel apresenta um link alternativo.
 
-Os cards ja abrem um calendario publico com dias e horarios calculados a partir da disponibilidade do Firestore. Cada servico informa sua propria duracao; os inicios sao oferecidos a cada 15 minutos e o bloqueio usa o tempo exato em intervalos internos de 5 minutos. Reservas concorrentes sao protegidas por transacoes do Firestore. O site e o painel mostram instrucoes de ajuda e permitem relatar problemas pelo WhatsApp da Maira.
+Os cards ja abrem um calendario publico com dias e horarios calculados a partir da disponibilidade do Firestore. Cada servico informa sua propria duracao; os inicios sao oferecidos a cada 15 minutos e o bloqueio usa o tempo exato em intervalos internos de 5 minutos. Reservas concorrentes sao protegidas por transacoes do Firestore. O site e o painel mostram instrucoes de ajuda e permitem relatar problemas pelo WhatsApp da Maira, com mensagens iniciais diferentes conforme a origem.
 
 ### Acesso e escopo inicial
 
@@ -79,12 +79,15 @@ O sistema bloqueara automaticamente intervalos que tenham conflito. Duas reserva
 - Versao atual: 2.0.
 - A versao e centralizada em `app/lib/site-config.ts` e exibida discretamente no rodape do site e do painel.
 - Instrucoes de ajuda e o atalho para relatar problemas pelo WhatsApp estao disponiveis no site e no painel administrativo.
+- O menu principal oferece o botao **Entrar** alinhado a direita; em telas estreitas, os links rolam sem ocultar esse botao.
+- Os controles de semana da agenda administrativa foram ajustados para manter **Proxima semana** visivel em telas de 320 px.
 
 ## Proximos passos
 
 1. Revisar se os servicos, duracoes e precos dos cards estao corretos.
 2. Conferir os dias, horarios e intervalos no painel.
 3. Testar em producao uma reserva, um conflito simultaneo, um bloqueio e um cancelamento no Firebase real.
+4. Verificar no celular o acesso ao WhatsApp e o comportamento caso o navegador bloqueie a abertura de uma nova aba.
 
 ## Nao definido ainda
 

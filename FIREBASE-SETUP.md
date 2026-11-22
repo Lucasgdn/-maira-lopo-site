@@ -27,12 +27,20 @@ As regras bloqueiam a criacao e alteracao da colecao `admins` pelo proprio site.
 
 Configure as mesmas seis variaveis `NEXT_PUBLIC_FIREBASE_*` nas variaveis de ambiente da hospedagem e faca um novo deploy. Nunca adicione `.env.local` ao Git.
 
+## Ajuda e navegacao
+
+O menu do site tem o botao **Entrar**, alinhado a direita. Em telas estreitas, os links do menu podem rolar horizontalmente sem esconder o botao.
+
+O site e o painel mostram a versao atual no rodape. A secao recolhivel **Ajuda e suporte** explica como agendar ou administrar a agenda. O botao **Relatar um problema pelo WhatsApp** abre uma conversa com a Maira e uma mensagem inicial contextualizada ao site ou ao painel; a pessoa pode completar e enviar a mensagem.
+
 ## Agenda e reservas
 
 O painel salva disponibilidade semanal, excecoes de datas e eventos manuais em `settings/availability`. A agenda administrativa tem uma visao semanal inspirada no Outlook e uma visualizacao adaptada para celular. Fechamentos de data podem ser removidos pelo botao **Reabrir** no proprio evento.
 
+No painel, os controles **Hoje**, **Semana anterior** e **Proxima semana** permitem navegar pela agenda. Em telas pequenas, o intervalo de datas fica compacto e os botoes de navegacao permanecem visiveis.
+
 Os botoes **Agendar** dos cards abrem o calendario publico. Cada card informa a duracao do servico; o sistema oferece inicios em intervalos de 15 minutos e reserva o tempo exato do servico em blocos internos de 5 minutos. Os horarios respeitam expediente, intervalos, eventos, excecoes e reservas existentes. A gravacao usa uma transacao do Firestore para impedir que duas clientes ocupem simultaneamente o mesmo intervalo.
 
-O pedido exige nome e celular/WhatsApp. Ele aparece no painel como **Aguardando contato**, e o painel oferece um atalho para conversar no WhatsApp e confirmar ou cancelar. Cancelar remove os bloqueios de horario. A solicitacao so fica disponivel publicamente depois que as regras atualizadas de `firestore.rules` forem publicadas no Firebase.
+O pedido exige nome e celular/WhatsApp e aparece no painel como **Aguardando contato**. **Confirmar e avisar** atualiza o status e prepara uma mensagem de confirmacao no WhatsApp da cliente. **Cancelar e avisar** atualiza o status, remove os bloqueios de horario e prepara uma mensagem de cancelamento. A mensagem abre para revisao e envio pela Maira; o site nao envia mensagens automaticamente. Se o navegador bloquear a abertura do WhatsApp, o painel oferece um link alternativo.
 
 `settings/availability` pode ser lido publicamente para exibir horarios, mas continua editavel apenas por administradoras. `appointments` guarda os dados pessoais da cliente e so pode ser lido por administradoras ativas. `bookingSlots` guarda apenas os intervalos ocupados, sem nome ou telefone, e e consultado para montar os horarios livres.
