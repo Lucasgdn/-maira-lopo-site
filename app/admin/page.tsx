@@ -57,6 +57,63 @@ type DisplayCalendarEvent = CalendarEvent & {
   booking?: true;
 };
 
+type CalendarEventPosition = {
+  laneIndex: number;
+  laneCount: number;
+};
+
+function getCalendarEventPositions(events: DisplayCalendarEvent[]) {
+  const positions = new Map<string, CalendarEventPosition>();
+  const timedEvents = events
+    .map((event) => ({
+      event,
+      start:
+        Number(event.startTime.slice(0, 2)) * 60 +
+        Number(event.startTime.slice(3, 5)),
+      end:
+        Number(event.endTime.slice(0, 2)) * 60 +
+        Number(event.endTime.slice(3, 5)),
+    }))
+    .filter(({ event, end, start }) => !event.allDay && end > start)
+    .sort((a, b) => a.start - b.start || a.end - b.end);
+
+  let overlappingGroup: typeof timedEvents = [];
+  let groupEnd = -1;
+
+  function assignGroup() {
+    const laneEnds: number[] = [];
+    const assignments: Array<{ id: string; laneIndex: number }> = [];
+    for (const { event, start, end } of overlappingGroup) {
+      let laneIndex = laneEnds.findIndex((laneEnd) => laneEnd <= start);
+      if (laneIndex === -1) {
+        laneIndex = laneEnds.length;
+        laneEnds.push(end);
+      } else {
+        laneEnds[laneIndex] = end;
+      }
+      assignments.push({ id: event.id, laneIndex });
+    }
+    assignments.forEach(({ id, laneIndex }) => {
+      positions.set(id, { laneIndex, laneCount: laneEnds.length });
+    });
+    overlappingGroup = [];
+    groupEnd = -1;
+  }
+
+  for (const item of timedEvents) {
+    if (overlappingGroup.length > 0 && item.start >= groupEnd) {
+      assignGroup();
+    }
+    overlappingGroup.push(item);
+    groupEnd = Math.max(groupEnd, item.end);
+  }
+  if (overlappingGroup.length > 0) {
+    assignGroup();
+  }
+
+  return positions;
+}
+
 const weekdayNames = [
   "Domingo",
   "Segunda",
@@ -906,6 +963,18 @@ export default function AdminPage() {
     return events;
   }
 
+  const timedEventsByDay = new Map<
+    string,
+    { events: DisplayCalendarEvent[]; positions: Map<string, CalendarEventPosition> }
+  >();
+  weekDays.forEach((date) => {
+    const events = getEventsForDay(date).filter((event) => !event.allDay);
+    timedEventsByDay.set(toDateKey(date), {
+      events,
+      positions: getCalendarEventPositions(events),
+    });
+  });
+
   return (
     <main className="min-h-screen bg-[#f5ebe0] px-4 py-10 text-[#3e3e3e] sm:px-6">
       <div className="mx-auto max-w-4xl">
@@ -1326,8 +1395,9 @@ export default function AdminPage() {
                               }}
                               type="button"
                             />
-                            {getEventsForDay(date)
-                              .filter((event) => !event.allDay)
+                            {timedEventsByDay
+                              .get(toDateKey(date))!
+                              .events
                               .filter((event) => {
                                 const startHour = Number(event.startTime.slice(0, 2));
                                 return startHour === hour;
@@ -1345,9 +1415,13 @@ export default function AdminPage() {
                                   24,
                                   ((endMinutes - startMinutes) / 60) * 64,
                                 );
+                                const position = timedEventsByDay
+                                  .get(toDateKey(date))!
+                                  .positions.get(event.id)!;
+                                const laneWidth = 100 / position.laneCount;
                                 return (
                                   <div
-                                    className={`absolute left-1 right-1 z-10 overflow-hidden rounded border-l-4 px-2 py-1 text-xs ${
+                                    className={`absolute z-10 overflow-hidden rounded border-l-4 px-1 py-1 text-xs sm:px-2 ${
                                       event.id.startsWith("closed-")
                                         ? "border-[#c66b52] bg-[#fff1ec] text-[#8c3d2c]"
                                         : event.booking
@@ -1355,10 +1429,15 @@ export default function AdminPage() {
                                           : "border-[#7a35a8] bg-[#eeddf8] text-[#542478]"
                                     }`}
                                     key={event.id}
-                                    style={{ top, height }}
+                                    style={{
+                                      top,
+                                      height,
+                                      left: `calc(${position.laneIndex * laneWidth}% + 4px)`,
+                                      width: `calc(${laneWidth}% - 8px)`,
+                                    }}
                                   >
                                     <div className="flex justify-between gap-1">
-                                      <span className="truncate font-medium">
+                                      <span className="min-w-0 truncate font-medium">
                                         {event.title}
                                       </span>
                                       {event.id.startsWith("closed-") ? (
