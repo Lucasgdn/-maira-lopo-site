@@ -17,6 +17,7 @@ export type Appointment = {
   service: string;
   price: string;
   durationMinutes: number;
+  professionalId: string;
   professionalName: string;
   date: string;
   startTime: string;
@@ -43,6 +44,8 @@ function isAppointment(value: unknown): value is Omit<Appointment, "id"> {
     typeof value.price === "string" &&
     "durationMinutes" in value &&
     typeof value.durationMinutes === "number" &&
+    "professionalId" in value &&
+    typeof value.professionalId === "string" &&
     "professionalName" in value &&
     typeof value.professionalName === "string" &&
     "date" in value &&
@@ -86,6 +89,12 @@ function getStatusWhatsAppUrl(
     status === "confirmed"
       ? `Olá ${appointment.customerName}! Seu agendamento de ${appointment.service} está confirmado para ${formatDate(appointment.date)} às ${appointment.startTime}. Aguardamos você!`
       : `Olá ${appointment.customerName}! Seu agendamento de ${appointment.service} para ${formatDate(appointment.date)} às ${appointment.startTime} foi cancelado. Pedimos desculpas pelo transtorno. Se desejar, fale conosco para escolher outro horário.`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+}
+
+function getReminderWhatsAppUrl(appointment: Appointment) {
+  const phone = appointment.customerPhone.replace(/\D/g, "");
+  const message = `Ola ${appointment.customerName}! Passando para lembrar do seu agendamento de ${appointment.service} no dia ${formatDate(appointment.date)} as ${appointment.startTime}, com ${appointment.professionalName}. Se precisar falar comigo, responda por aqui. Ate la!`;
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
 
@@ -267,6 +276,16 @@ export default function AppointmentsPanel({ onAppointmentsChange }: Props) {
                   >
                     WhatsApp
                   </a>
+                  {appointment.status === "confirmed" && (
+                    <a
+                      className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#218c52] px-3 text-sm font-semibold text-[#176d3e] hover:bg-[#edf8f0]"
+                      href={getReminderWhatsAppUrl(appointment)}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      Enviar lembrete
+                    </a>
+                  )}
                   {appointment.status === "pending" && (
                     <button
                       className="min-h-10 rounded-lg border border-[#7a6a5a] px-3 text-sm font-medium hover:bg-white disabled:opacity-60"

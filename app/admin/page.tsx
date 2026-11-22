@@ -242,6 +242,7 @@ export default function AdminPage() {
   const [dateOverrides, setDateOverrides] = useState<Record<string, DateOverride>>({});
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [calendarProfessionalFilter, setCalendarProfessionalFilter] = useState("");
   const [dateOverrideLabel, setDateOverrideLabel] = useState("");
   const [bulkMondayEndTime, setBulkMondayEndTime] = useState("12:00");
   const [todayDate] = useState(() => {
@@ -860,12 +861,15 @@ export default function AdminPage() {
     appointments
       .filter(
         (appointment) =>
-          appointment.date === dateKey && appointment.status !== "cancelled",
+          appointment.date === dateKey &&
+          appointment.status !== "cancelled" &&
+          (!calendarProfessionalFilter ||
+            appointment.professionalId === calendarProfessionalFilter),
       )
       .forEach((appointment) => {
         events.push({
           id: `appointment-${appointment.id}`,
-          title: `${appointment.service} · ${appointment.customerName}`,
+          title: `${appointment.service} · ${appointment.customerName} · ${appointment.professionalName}`,
           date: appointment.date,
           startTime: appointment.startTime,
           endTime: appointment.endTime,
@@ -996,15 +1000,34 @@ export default function AdminPage() {
 
             <section className="mt-6 overflow-hidden rounded-2xl border border-[#e5d7cb] bg-white shadow-sm">
               <div className="flex flex-col gap-3 border-b border-[#e8ddd4] p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                <button
-                  className="min-h-11 self-start rounded-lg bg-[#7a35a8] px-4 py-2 font-semibold text-white hover:bg-[#642890]"
-                  onClick={() =>
-                    openNewEvent(selectedDate ?? weekStart)
-                  }
-                  type="button"
-                >
-                  + Novo evento
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    className="min-h-11 self-start rounded-lg bg-[#7a35a8] px-4 py-2 font-semibold text-white hover:bg-[#642890]"
+                    onClick={() =>
+                      openNewEvent(selectedDate ?? weekStart)
+                    }
+                    type="button"
+                  >
+                    + Novo evento
+                  </button>
+                  {professionals.length > 1 && (
+                    <label className="flex items-center gap-2 text-sm font-medium text-[#5c4a3f]">
+                      Agenda
+                      <select
+                        className="min-h-10 max-w-48 rounded-lg border border-[#d9c9bc] bg-white px-2"
+                        onChange={(event) => setCalendarProfessionalFilter(event.target.value)}
+                        value={calendarProfessionalFilter}
+                      >
+                        <option value="">Todas</option>
+                        {professionals.map((professional) => (
+                          <option key={professional.id} value={professional.id}>
+                            {professional.name || "Profissional"}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </div>
                 <div className="flex w-full min-w-0 items-center gap-1 sm:w-auto sm:gap-2">
                   <button
                     className="min-h-10 shrink-0 rounded-lg border border-[#d9c9bc] px-3 text-sm font-medium hover:bg-[#fffaf5]"

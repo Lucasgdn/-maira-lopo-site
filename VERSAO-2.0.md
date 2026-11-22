@@ -10,7 +10,7 @@ Criar uma agenda integrada ao site com procedimentos, duracoes, precos, profissi
 
 O painel administrativo em `/admin` usa Firebase Authentication, e-mail e senha, verifica uma lista de administradores no Firestore e oferece uma agenda semanal inspirada no Outlook, com eventos de bloqueio, configuracao da rotina por dia da semana e reservas de clientes. Confirmar ou cancelar uma reserva atualiza a agenda e abre uma mensagem pronta no WhatsApp para a Maira revisar e enviar. Se a abertura automatica for bloqueada, o painel apresenta um link alternativo.
 
-Os cards ja abrem um calendario publico com dias e horarios calculados a partir da disponibilidade do Firestore. Cada servico informa sua propria duracao; os inicios sao oferecidos a cada 15 minutos e o bloqueio usa o tempo exato em intervalos internos de 5 minutos. Reservas concorrentes sao protegidas por transacoes do Firestore. O site e o painel mostram instrucoes de ajuda e permitem relatar problemas pelo WhatsApp da Maira, com mensagens iniciais diferentes conforme a origem.
+Os cards ja abrem um calendario publico com dias e horarios calculados a partir da disponibilidade do Firestore. Se houver mais de uma profissional, a cliente escolhe uma para ver a agenda correspondente; horarios ocupados sao independentes por profissional. Cada servico informa sua propria duracao; os inicios sao oferecidos a cada 15 minutos e o bloqueio usa o tempo exato em intervalos internos de 5 minutos. Reservas concorrentes sao protegidas por transacoes do Firestore. O site e o painel mostram instrucoes de ajuda e permitem relatar problemas pelo WhatsApp da Maira, com mensagens iniciais diferentes conforme a origem.
 
 ### Acesso e escopo inicial
 
@@ -30,6 +30,7 @@ Os cards ja abrem um calendario publico com dias e horarios calculados a partir 
 3. A cliente informa nome e WhatsApp obrigatorios.
 4. O pedido fica como pendente e ocupa os intervalos para evitar conflito.
 5. A Maira ve a reserva no painel e pode confirma-la ou cancela-la; cada acao atualiza a agenda e prepara uma mensagem correspondente no WhatsApp.
+6. Para reservas confirmadas, a Maira pode tocar em **Enviar lembrete** para abrir uma mensagem pronta no WhatsApp. O lembrete e enviado manualmente, sem custo de envio pela integracao do site.
 
 ### Disponibilidade definida pela profissional
 
@@ -42,6 +43,7 @@ Ela tera um painel administrativo protegido por login para:
 - Bloquear horarios individuais.
 - Registrar horarios ocupados por atendimentos feitos fora do site.
 - Visualizar agendamentos pendentes e confirmados, tambem na agenda semanal.
+- Filtrar a agenda semanal por profissional ou visualizar todas juntas.
 - Confirmar ou cancelar reservas e liberar o horario ao cancelar.
 - Usar a agenda da profissional que tiver disponibilidade.
 
@@ -79,6 +81,8 @@ O sistema bloqueara automaticamente intervalos que tenham conflito. Duas reserva
 - Versao atual: 2.0.
 - A versao e centralizada em `app/lib/site-config.ts` e exibida discretamente no rodape do site e do painel.
 - Instrucoes de ajuda e o atalho para relatar problemas pelo WhatsApp estao disponiveis no site e no painel administrativo.
+- Quando ha varias profissionais, a cliente escolhe quem atendera; os horarios e reservas sao independentes por profissional, e a agenda administrativa permite filtrar por pessoa.
+- Reservas confirmadas tem o atalho **Enviar lembrete**, que abre a mensagem no WhatsApp para revisao e envio manual pela Maira.
 - O menu principal oferece o botao **Entrar** alinhado a direita; em telas estreitas, os links rolam sem ocultar esse botao.
 - Os controles de semana da agenda administrativa foram ajustados para manter **Proxima semana** visivel em telas de 320 px.
 
@@ -91,7 +95,7 @@ O sistema bloqueara automaticamente intervalos que tenham conflito. Duas reserva
 
 ## Nao definido ainda
 
-- Quantidade de profissionais e se a cliente deve escolher quem atende.
+- Como arquivar ou remover profissionais sem alterar o historico das reservas.
 - Campos adicionais alem de nome e WhatsApp.
 - Politica de cancelamento.
 - Prazo minimo para agendar.

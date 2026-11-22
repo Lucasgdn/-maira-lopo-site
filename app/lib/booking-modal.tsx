@@ -234,6 +234,7 @@ export default function BookingModal({ service, onClose }: Props) {
   const [availabilityError, setAvailabilityError] = useState(
     () => (firestore ? "" : "O agendamento ainda nao esta configurado."),
   );
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedStartTime, setSelectedStartTime] = useState("");
   const [bookedSlotIds, setBookedSlotIds] = useState<Set<string>>(new Set());
@@ -287,22 +288,33 @@ export default function BookingModal({ service, onClose }: Props) {
     };
   }, []);
 
+  const effectiveSelectedProfessionalId =
+    selectedProfessionalId ||
+    (availability?.professionals.length === 1
+      ? availability.professionals[0].id
+      : "");
+  const selectedProfessional = availability?.professionals.find(
+    (professional) => professional.id === effectiveSelectedProfessionalId,
+  );
+
   const openDates = useMemo(
     () =>
-      availability
+      availability && effectiveSelectedProfessionalId
         ? dates.filter((date) => {
             const key = dateKey(date);
             if (availability.dateOverrides?.[key]?.closed) return false;
             if (availability.calendarEvents?.some((event) => event.date === key && event.allDay)) {
               return false;
             }
-            return availability.professionals.some((professional) => {
-              const schedule = getSchedule(professional, date);
-              return schedule.open && schedule.startTime < schedule.endTime;
-            });
+            const professional = availability.professionals.find(
+              (candidate) => candidate.id === effectiveSelectedProfessionalId,
+            );
+            if (!professional) return false;
+            const schedule = getSchedule(professional, date);
+            return schedule.open && schedule.startTime < schedule.endTime;
           })
         : [],
-    [availability, dates],
+    [availability, dates, effectiveSelectedProfessionalId],
   );
 
   const effectiveSelectedDate =
@@ -339,11 +351,10 @@ export default function BookingModal({ service, onClose }: Props) {
     loadedSlotsKey === `${effectiveSelectedDate}:${slotsRefreshCount}`;
 
   const availableSlots = (() => {
-    if (!availability || !effectiveSelectedDate) return [];
+    if (!availability || !selectedProfessional || !effectiveSelectedDate) return [];
     const date = dateFromKey(effectiveSelectedDate);
-    const professionalsForDate = availability.professionals.filter((professional) =>
-      getSchedule(professional, date).open,
-    );
+    const schedule = getSchedule(selectedProfessional, date);
+    if (!schedule.open || schedule.startTime >= schedule.endTime) return [];
     const blockedPeriods: Array<[number, number]> = [];
     const override = availability.dateOverrides?.[effectiveSelectedDate];
     if (override?.closed) return [];
@@ -362,32 +373,31 @@ export default function BookingModal({ service, onClose }: Props) {
         start,
         label: `${String(Math.floor(start / 60)).padStart(2, "0")}:${String(start % 60).padStart(2, "0")}`,
       }))
-      .filter(({ start }) =>
-        professionalsForDate.some((professional) => {
-          const schedule = getSchedule(professional, date);
-          const end = start + service.duracaoMinutos;
-          if (start < minutes(schedule.startTime) || end > minutes(schedule.endTime)) {
-            return false;
-          }
-          if (
-            schedule.breakStart &&
-            schedule.breakEnd &&
-            overlaps(start, end, minutes(schedule.breakStart), minutes(schedule.breakEnd))
-          ) {
-            return false;
-          }
-          if (blockedPeriods.some(([from, to]) => overlaps(start, end, from, to))) {
-            return false;
-          }
-          const slotDateTime = new Date(`${effectiveSelectedDate}T${String(Math.floor(start / 60)).padStart(2, "0")}:${String(start % 60).padStart(2, "0")}:00`);
-          if (slotDateTime.getTime() <= now.getTime()) return false;
-          const slotTimes = getLockTimes(start, service.duracaoMinutos);
-          return slotTimes.every(
-            (time) =>
-              !bookedSlotIds.has(makeSlotId(professional.id, effectiveSelectedDate, time)),
-          );
-        }),
-      );
+      .filter(({ start }) => {
+        const end = start + service.duracaoMinutos;
+        if (start < minutes(schedule.startTime) || end > minutes(schedule.endTime)) {
+          return false;
+        }
+        if (
+          schedule.breakStart &&
+          schedule.breakEnd &&
+          overlaps(start, end, minutes(schedule.breakStart), minutes(schedule.breakEnd))
+        ) {
+          return false;
+        }
+        if (blockedPeriods.some(([from, to]) => overlaps(start, end, from, to))) {
+          return false;
+        }
+        const slotDateTime = new Date(`${effectiveSelectedDate}T${String(Math.floor(start / 60)).padStart(2, "0")}:${String(start % 60).padStart(2, "0")}:00`);
+        if (slotDateTime.getTime() <= now.getTime()) return false;
+        const slotTimes = getLockTimes(start, service.duracaoMinutos);
+        return slotTimes.every(
+          (time) =>
+            !bookedSlotIds.has(
+              makeSlotId(selectedProfessional.id, effectiveSelectedDate, time),
+            ),
+        );
+      });
   })();
 
   async function submitBooking(event: FormEvent<HTMLFormElement>) {
@@ -396,6 +406,7 @@ export default function BookingModal({ service, onClose }: Props) {
     if (
       !firestore ||
       !availability ||
+      !selectedProfessional ||
       !effectiveSelectedDate ||
       !selectedStartTime
     ) {
@@ -424,26 +435,26 @@ export default function BookingModal({ service, onClose }: Props) {
     }
 
     const date = dateFromKey(effectiveSelectedDate);
-    const professionalsForDate = availability.professionals.filter((candidate) =>
-      getSchedule(candidate, date).open,
-    );
     const start = minutes(selectedStartTime);
     const end = start + service.duracaoMinutos;
-    const professional = professionalsForDate.find((candidate) => {
-      const schedule = getSchedule(candidate, date);
-      if (start < minutes(schedule.startTime) || end > minutes(schedule.endTime)) return false;
-      if (
-        schedule.breakStart &&
+    const professional = availability.professionals.find(
+      (candidate) => candidate.id === effectiveSelectedProfessionalId,
+    );
+    const schedule = professional ? getSchedule(professional, date) : null;
+    if (
+      !professional ||
+      !schedule?.open ||
+      start < minutes(schedule.startTime) ||
+      end > minutes(schedule.endTime) ||
+      (schedule.breakStart &&
         schedule.breakEnd &&
-        overlaps(start, end, minutes(schedule.breakStart), minutes(schedule.breakEnd))
-      ) {
-        return false;
-      }
-      return getLockTimes(start, service.duracaoMinutos).map((time) => {
-        return !bookedSlotIds.has(makeSlotId(candidate.id, effectiveSelectedDate, time));
-      }).every(Boolean);
-    });
-    if (!professional) {
+        overlaps(start, end, minutes(schedule.breakStart), minutes(schedule.breakEnd))) ||
+      getLockTimes(start, service.duracaoMinutos).some((time) =>
+        bookedSlotIds.has(
+          makeSlotId(professional.id, effectiveSelectedDate, time),
+        ),
+      )
+    ) {
       setErrorMessage("Esse horario acabou de ser ocupado. Escolha outro horario.");
       return;
     }
@@ -626,8 +637,37 @@ export default function BookingModal({ service, onClose }: Props) {
             </p>
           ) : (
             <>
-              {!selectedStartTime ? (
-                <>
+          {availability.professionals.length > 1 && (
+            <label className="mb-5 block text-sm font-medium text-[#5c4a3f]">
+              Com quem deseja agendar?
+              <select
+                className={modalInputClass}
+                onChange={(event) => {
+                  setSelectedProfessionalId(event.target.value);
+                  setSelectedDate("");
+                  setSelectedStartTime("");
+                  setErrorMessage("");
+                }}
+                required
+                value={effectiveSelectedProfessionalId}
+              >
+                <option value="">Escolha uma profissional</option>
+                {availability.professionals.map((professional) => (
+                  <option key={professional.id} value={professional.id}>
+                    {professional.name || "Profissional"}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {availability.professionals.length > 1 && !selectedProfessional ? (
+            <p className="rounded-xl bg-white p-4 text-sm text-[#6b625b]">
+              Escolha uma profissional para ver os dias e horários disponíveis na agenda dela.
+            </p>
+          ) : (
+            <>
+          {!selectedStartTime ? (
+            <>
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#a87551]">
                     Escolha o dia e o horario
                   </p>
@@ -712,7 +752,7 @@ export default function BookingModal({ service, onClose }: Props) {
               ) : (
                 <form className="space-y-4" onSubmit={submitBooking}>
                   <div className="rounded-xl border border-[#dfc6b4] bg-white px-4 py-3 font-semibold capitalize text-[#321f18]">
-                    {chosenDateLabel}
+                    {selectedProfessional?.name} · {chosenDateLabel}
                   </div>
                   <label className="block text-xs font-semibold uppercase tracking-wide text-[#765b4a]">
                     Nome completo
@@ -762,6 +802,8 @@ export default function BookingModal({ service, onClose }: Props) {
                     ← Escolher outro horario
                   </button>
                 </form>
+              )}
+                </>
               )}
               {errorMessage && !selectedStartTime && (
                 <p className="mt-4 text-sm text-red-700" role="alert">
