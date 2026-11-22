@@ -841,6 +841,13 @@ export default function AdminPage() {
     month: "2-digit",
     year: "numeric",
   }).format(weekDays[6])}`;
+  const compactWeekRangeLabel = `${new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+  }).format(weekDays[0])}–${new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+  }).format(weekDays[6])}${weekDays[0].getFullYear() !== weekDays[6].getFullYear() ? `/${new Intl.DateTimeFormat("pt-BR", { year: "2-digit" }).format(weekDays[6])}` : ""}`;
   const visibleHours = Array.from({ length: 13 }, (_, index) => index + 8);
 
   function getEventsForDay(date: Date) {
@@ -984,9 +991,9 @@ export default function AdminPage() {
             <AppointmentsPanel onAppointmentsChange={setAppointments} />
 
             <section className="mt-6 overflow-hidden rounded-2xl border border-[#e5d7cb] bg-white shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e8ddd4] p-4">
+              <div className="flex flex-col gap-3 border-b border-[#e8ddd4] p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <button
-                  className="min-h-11 rounded-lg bg-[#7a35a8] px-4 py-2 font-semibold text-white hover:bg-[#642890]"
+                  className="min-h-11 self-start rounded-lg bg-[#7a35a8] px-4 py-2 font-semibold text-white hover:bg-[#642890]"
                   onClick={() =>
                     openNewEvent(selectedDate ?? weekStart)
                   }
@@ -994,9 +1001,9 @@ export default function AdminPage() {
                 >
                   + Novo evento
                 </button>
-                <div className="flex items-center gap-2">
+                <div className="flex w-full min-w-0 items-center gap-1 sm:w-auto sm:gap-2">
                   <button
-                    className="min-h-10 rounded-lg border border-[#d9c9bc] px-3 text-sm font-medium hover:bg-[#fffaf5]"
+                    className="min-h-10 shrink-0 rounded-lg border border-[#d9c9bc] px-3 text-sm font-medium hover:bg-[#fffaf5]"
                       onClick={() => {
                         setWeekStart(getWeekStart(todayDate));
                         setSelectedDate(todayDate);
@@ -1007,18 +1014,19 @@ export default function AdminPage() {
                   </button>
                   <button
                     aria-label="Semana anterior"
-                    className="h-10 w-10 rounded-lg border border-[#d9c9bc] text-lg hover:bg-[#fffaf5]"
+                    className="h-10 w-10 shrink-0 rounded-lg border border-[#d9c9bc] text-lg hover:bg-[#fffaf5]"
                     onClick={() => navigateWeek(-1)}
                     type="button"
                   >
                     ‹
                   </button>
-                  <h3 className="min-w-40 text-center font-semibold capitalize">
-                    {weekRangeLabel}
+                  <h3 className="min-w-0 flex-1 text-center text-xs font-semibold capitalize sm:min-w-40 sm:flex-none sm:text-base">
+                    <span className="sm:hidden">{compactWeekRangeLabel}</span>
+                    <span className="hidden sm:inline">{weekRangeLabel}</span>
                   </h3>
                   <button
                     aria-label="Proxima semana"
-                    className="h-10 w-10 rounded-lg border border-[#d9c9bc] text-lg hover:bg-[#fffaf5]"
+                    className="h-10 w-10 shrink-0 rounded-lg border border-[#d9c9bc] text-lg hover:bg-[#fffaf5]"
                     onClick={() => navigateWeek(1)}
                     type="button"
                   >
