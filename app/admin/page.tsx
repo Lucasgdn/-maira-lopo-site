@@ -1906,8 +1906,8 @@ export default function AdminPage() {
                                 Atender neste dia
                               </label>
                               {schedule.open && (
-                                <div className="mt-2 grid grid-cols-2 gap-3">
-                                  <label className="text-xs font-medium sm:text-sm">
+                                <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                  <label className="min-w-0 text-xs font-medium sm:text-sm">
                                     Abre
                                     <input
                                       className={inputClassName}
@@ -1921,7 +1921,7 @@ export default function AdminPage() {
                                       value={schedule.startTime}
                                     />
                                   </label>
-                                  <label className="text-xs font-medium sm:text-sm">
+                                  <label className="min-w-0 text-xs font-medium sm:text-sm">
                                     Fecha
                                     <input
                                       className={inputClassName}
@@ -1935,7 +1935,7 @@ export default function AdminPage() {
                                       value={schedule.endTime}
                                     />
                                   </label>
-                                  <label className="text-xs font-medium sm:text-sm">
+                                  <label className="min-w-0 text-xs font-medium sm:text-sm">
                                     Inicio do intervalo (opcional)
                                     <input
                                       className={inputClassName}
@@ -1948,7 +1948,7 @@ export default function AdminPage() {
                                       value={schedule.breakStart}
                                     />
                                   </label>
-                                  <label className="text-xs font-medium sm:text-sm">
+                                  <label className="min-w-0 text-xs font-medium sm:text-sm">
                                     Fim do intervalo
                                     <input
                                       className={inputClassName}

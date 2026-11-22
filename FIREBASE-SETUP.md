@@ -39,6 +39,8 @@ O painel salva disponibilidade semanal, excecoes de datas e eventos manuais em `
 
 No painel, os controles **Hoje**, **Semana anterior** e **Proxima semana** permitem navegar pela agenda. Em telas pequenas, o intervalo de datas fica compacto e os botoes de navegacao permanecem visiveis.
 
+Na configuracao da rotina semanal, os campos de horario ficam empilhados no celular e passam para duas colunas em telas maiores para evitar sobreposicao.
+
 Os botoes **Agendar** dos cards abrem o calendario publico. Cada card informa a duracao do servico; o sistema oferece inicios em intervalos de 15 minutos e reserva o tempo exato do servico em blocos internos de 5 minutos. Os horarios respeitam expediente, intervalos, eventos, excecoes e reservas existentes. A gravacao usa uma transacao do Firestore para impedir que duas clientes ocupem simultaneamente o mesmo intervalo.
 
 O pedido exige nome e celular/WhatsApp e aparece no painel como **Aguardando contato**. **Confirmar e avisar** atualiza o status e prepara uma mensagem de confirmacao no WhatsApp da cliente. **Cancelar e avisar** atualiza o status, remove os bloqueios de horario e prepara uma mensagem de cancelamento. A mensagem abre para revisao e envio pela Maira; o site nao envia mensagens automaticamente. Se o navegador bloquear a abertura do WhatsApp, o painel oferece um link alternativo.
