@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import BookingModal from "./lib/booking-modal";
+import HelpSupport from "./components/help-support";
+import { MAIRA_WHATSAPP_NUMBER, SITE_VERSION } from "./lib/site-config";
 
 type BookingService = {
   servico: string;
@@ -558,8 +560,9 @@ export default function Home() {
 
       {/* WHATSAPP FLUTUANTE */}
       <a
-        href="https://wa.me/5519971023894"
+        href={`https://wa.me/${MAIRA_WHATSAPP_NUMBER}`}
         target="_blank"
+        rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-50"
       >
         <span className="absolute inset-0 rounded-full bg-green-500 opacity-70 animate-ping"></span>
@@ -578,8 +581,9 @@ export default function Home() {
         />
       )}
 
-      <div className="pb-4 text-center text-xs text-[#9a8f84]">
-        Versao 1.0
+      <HelpSupport area="site" />
+      <div className="pb-4 pt-6 text-center text-xs text-[#9a8f84]">
+        Versão {SITE_VERSION}
       </div>
 
     </main>

@@ -1,0 +1,2 @@
+export const SITE_VERSION = "2.0";
+export const MAIRA_WHATSAPP_NUMBER = "5519971023894";

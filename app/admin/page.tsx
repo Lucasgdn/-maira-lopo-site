@@ -16,6 +16,8 @@ import {
 } from "firebase/firestore";
 import AppointmentsPanel, { type Appointment } from "./appointments-panel";
 import { firebaseAuth, firebaseConfigured, firestore } from "../lib/firebase";
+import HelpSupport from "../components/help-support";
+import { SITE_VERSION } from "../lib/site-config";
 
 type ProfessionalSchedule = {
   id: string;
@@ -915,6 +917,8 @@ export default function AdminPage() {
             Gerencie quem atende e os horarios semanais disponiveis.
           </p>
         </header>
+
+        <HelpSupport area="admin" />
 
         {!firebaseConfigured ? (
           <section className="rounded-2xl border border-[#e5d7cb] bg-white p-6 shadow-sm sm:p-8">
@@ -2017,6 +2021,9 @@ export default function AdminPage() {
             Conectado como {user.email}
           </p>
         )}
+        <p className="mt-8 text-center text-xs text-[#8a7b6e]">
+          Versão {SITE_VERSION}
+        </p>
       </div>
     </main>
   );
