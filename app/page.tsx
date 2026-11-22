@@ -106,21 +106,27 @@ export default function Home() {
     "/revista_pagina_20.jpg",
   ];
 
-  const precos: Array<{ servico: string; preco: string; promocao?: string }> = [
-    { servico: "Mão", preco: "R$ 40,00" },
-    { servico: "Pé", preco: "R$ 45,00" },
-    { servico: "Mão e Pé", preco: "R$ 80,00" },
-    { servico: "Esmaltação em Gel", preco: "R$ 110,00" },
-    { servico: "Unhas Postiças Realistas", preco: "R$ 65,00" },
-    { servico: "Banho de Gel", preco: "R$ 130,00" },
-    { servico: "Alongamento", preco: "R$ 190,00" },
-    { servico: "Manutenção de Alongamento", preco: "R$ 150,00" },
-    { servico: "Spa das Mãos", preco: "R$ 40,00" },
-    { servico: "Spa Terapêutico", preco: "R$ 80,00" },
-    { servico: "Peeling de Calosidade", preco: "R$ 75,00" },
-    { servico: "Escalda Pés", preco: "R$ 40,00" },
-    { servico: "Esmaltação Tradicional Mão/Pé", preco: "R$ 25,00" },
-    { servico: "Blindagem", preco: "R$ 75,00" },
+  const precos: Array<{
+    servico: string;
+    preco: string;
+    duracao: string;
+    imagem: string;
+    promocao?: string;
+  }> = [
+    { servico: "Mão", preco: "R$ 40,00", duracao: "40 min", imagem: "/esmaltacaoemgel1.jpeg" },
+    { servico: "Pé", preco: "R$ 45,00", duracao: "50 min", imagem: "/pedicuretradicional.jpeg" },
+    { servico: "Mão e Pé", preco: "R$ 80,00", duracao: "1h30", imagem: "/emgelpedicure.jpeg" },
+    { servico: "Esmaltação em Gel", preco: "R$ 110,00", duracao: "1h", imagem: "/esmaltacaoemgel2.jpeg" },
+    { servico: "Unhas Postiças Realistas", preco: "R$ 65,00", duracao: "1h", imagem: "/alomgamentodeunha1.jpeg" },
+    { servico: "Banho de Gel", preco: "R$ 130,00", duracao: "1h30", imagem: "/alongamentodeunha2.jpeg" },
+    { servico: "Alongamento", preco: "R$ 190,00", duracao: "2h", imagem: "/alongamentodeunha2.jpeg" },
+    { servico: "Manutenção de Alongamento", preco: "R$ 150,00", duracao: "1h30", imagem: "/alomgamentodeunha1.jpeg" },
+    { servico: "Spa das Mãos", preco: "R$ 40,00", duracao: "40 min", imagem: "/cuticularussaemgel.jpeg" },
+    { servico: "Spa Terapêutico", preco: "R$ 80,00", duracao: "1h", imagem: "/ambiente1.jpg" },
+    { servico: "Peeling de Calosidade", preco: "R$ 75,00", duracao: "50 min", imagem: "/pedicuregel.jpeg" },
+    { servico: "Escalda Pés", preco: "R$ 40,00", duracao: "30 min", imagem: "/pedicuretradicional.jpeg" },
+    { servico: "Esmaltação Tradicional Mão/Pé", preco: "R$ 25,00", duracao: "30 min", imagem: "/esmaltacaoemgel1.jpeg" },
+    { servico: "Blindagem", preco: "R$ 75,00", duracao: "40 min", imagem: "/cuticularussaemgel.jpeg" },
   ];
 
   useEffect(() => {
@@ -190,7 +196,7 @@ export default function Home() {
           <a href="#servicos" onClick={(e) => handleNavClick(e, 'servicos')} className="inline-block px-3 hover:text-black">Serviços</a>
           <a href="#experiencia" onClick={(e) => handleNavClick(e, 'experiencia')} className="inline-block px-3 hover:text-black">Experiência</a>
           <a href="#revista" onClick={(e) => handleNavClick(e, 'revista')} className="inline-block px-3 hover:text-black">Revista</a>
-          <a href="#precos" onClick={(e) => handleNavClick(e, 'precos')} className="inline-block px-3 hover:text-black">Preços</a>
+          <a href="#precos" onClick={(e) => handleNavClick(e, 'precos')} className="inline-block px-3 hover:text-black">Procedimentos</a>
           <a href="#agendamento" onClick={(e) => handleNavClick(e, 'agendamento')} className="inline-block px-3 hover:text-black">Agendamento</a>
         </div>
       </nav>
@@ -467,50 +473,56 @@ export default function Home() {
       </section>
 
       {/* PREÇOS */}
-      <section id="precos" className="py-28 px-6 bg-white text-center" style={{ scrollMarginTop: '80px' }}>
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold">Tabela de Preços</h2>
-          <p className="mt-4 text-[#5c5c5c] leading-relaxed">
-            Conheça nossos valores e escolha o serviço perfeito para você.
+      <section id="precos" className="py-20 md:py-28 px-4 md:px-6 bg-white" style={{ scrollMarginTop: '80px' }}>
+        <div className="max-w-6xl mx-auto">
+          <p className="text-sm font-semibold tracking-[0.22em] text-[#a36f5a] uppercase">
+            Procedimentos
+          </p>
+          <h2 className="mt-3 text-3xl md:text-4xl font-bold">Escolha seu serviço</h2>
+          <p className="mt-4 max-w-2xl text-[#5c5c5c] leading-relaxed">
+            Confira a duração, o valor e toque em Agendar para escolher seu horário.
           </p>
 
-          <div className="mt-10 overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-[#7a6a5a] text-white">
-                  <th className="px-6 py-4 text-left font-semibold">Serviço</th>
-                  <th className="px-6 py-4 text-right font-semibold">Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {precos.map((item, index) => (
-                  <tr
-                    key={index}
-                    className={`border-b border-[#e5d7cb] ${
-                      index % 2 === 0 ? "bg-[#fffaf5]" : "bg-white"
-                    } hover:bg-[#f5ebe0] transition`}
+          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {precos.map((item) => (
+              <article
+                key={item.servico}
+                className="overflow-hidden rounded-2xl border border-[#e8ddd4] bg-[#fffaf5] text-left shadow-[0_10px_35px_rgba(92,74,61,0.08)] transition-transform duration-300 hover:-translate-y-1"
+              >
+                <div className="h-52 overflow-hidden bg-[#f1e7df]">
+                  <img
+                    src={item.imagem}
+                    alt={item.servico}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+
+                <div className="flex min-h-64 flex-col p-6">
+                  <h3 className="text-xl font-bold text-[#3e3e3e]">{item.servico}</h3>
+
+                  <div className="mt-5 flex items-end justify-between border-t border-[#e8ddd4] pt-5">
+                    <span className="flex items-center gap-2 text-sm text-[#7a6a5a]">
+                      <span aria-hidden="true">⏱</span>
+                      {item.duracao}
+                    </span>
+                    <strong className="text-xl text-[#5c4a3f]">{item.preco}</strong>
+                  </div>
+
+                  <a
+                    href="https://dottovip.com.br/mairalopoesmaltaria"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full border border-[#7a6a5a] px-6 py-3 font-semibold text-[#5c4a3f] transition hover:bg-[#7a6a5a] hover:text-white"
                   >
-                    <td className="px-6 py-4 text-left text-[#3e3e3e]">
-                      {item.servico}
-                    </td>
-                    <td className="px-6 py-4 text-right text-[#7a6a5a] font-semibold">
-                      {item.promocao ? (
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="text-green-600">{item.preco}</span>
-                          <span className="text-sm line-through text-gray-400">{item.promocao}</span>
-                        </div>
-                      ) : (
-                        item.preco
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    Agendar
+                  </a>
+                </div>
+              </article>
+            ))}
           </div>
 
-          <p className="mt-8 text-sm text-[#5c5c5c]">
-            💡 <strong>Dica:</strong> Combos e promoções disponíveis. Consulte pelo WhatsApp para detalhes!
+          <p className="mt-10 text-center text-sm text-[#5c5c5c]">
+            <strong>Dica:</strong> Consulte promoções e combinações pelo WhatsApp.
           </p>
         </div>
       </section>
@@ -547,6 +559,10 @@ export default function Home() {
           />
         </span>
       </a>
+
+      <div className="pb-4 text-center text-xs text-[#9a8f84]">
+        Versao 1.0
+      </div>
 
     </main>
   );
