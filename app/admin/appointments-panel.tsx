@@ -77,11 +77,24 @@ function getWhatsAppUrl(appointment: Appointment) {
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
 
+function getStatusWhatsAppUrl(
+  appointment: Appointment,
+  status: "confirmed" | "cancelled",
+) {
+  const phone = appointment.customerPhone.replace(/\D/g, "");
+  const message =
+    status === "confirmed"
+      ? `Olá ${appointment.customerName}! Seu agendamento de ${appointment.service} está confirmado para ${formatDate(appointment.date)} às ${appointment.startTime}. Aguardamos você!`
+      : `Olá ${appointment.customerName}! Seu agendamento de ${appointment.service} para ${formatDate(appointment.date)} às ${appointment.startTime} foi cancelado. Pedimos desculpas pelo transtorno. Se desejar, fale conosco para escolher outro horário.`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+}
+
 export default function AppointmentsPanel({ onAppointmentsChange }: Props) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [whatsAppFallback, setWhatsAppFallback] = useState("");
 
   useEffect(() => {
     if (!firestore) return;
@@ -122,8 +135,11 @@ export default function AppointmentsPanel({ onAppointmentsChange }: Props) {
   ) {
     const db = firestore;
     if (!db) return;
+    const whatsappWindow = window.open("about:blank", "_blank");
+    if (whatsappWindow) whatsappWindow.opener = null;
     setSavingId(appointment.id);
     setErrorMessage("");
+    setWhatsAppFallback("");
     try {
       if (status === "cancelled") {
         const appointmentRef = doc(db, "appointments", appointment.id);
@@ -149,12 +165,25 @@ export default function AppointmentsPanel({ onAppointmentsChange }: Props) {
         });
       }
     } catch {
+      whatsappWindow?.close();
       setErrorMessage(
         "Nao foi possivel atualizar esta reserva. Atualize a pagina e tente novamente.",
       );
+      return;
     } finally {
       setSavingId("");
     }
+
+    const whatsappUrl = getStatusWhatsAppUrl(appointment, status);
+    if (whatsappWindow && !whatsappWindow.closed) {
+      try {
+        whatsappWindow.location.replace(whatsappUrl);
+        return;
+      } catch {
+        whatsappWindow.close();
+      }
+    }
+    setWhatsAppFallback(whatsappUrl);
   }
 
   const activeAppointments = appointments.filter(
@@ -176,6 +205,20 @@ export default function AppointmentsPanel({ onAppointmentsChange }: Props) {
       {errorMessage && (
         <p className="mt-4 rounded-lg bg-[#fff1ec] p-3 text-sm text-[#8c3d2c]" role="alert">
           {errorMessage}
+        </p>
+      )}
+      {whatsAppFallback && (
+        <p className="mt-4 rounded-lg bg-[#edf8f0] p-3 text-sm text-[#176d3e]" role="status">
+          Reserva atualizada. Se o WhatsApp nao abriu,{" "}
+          <a
+            className="font-semibold underline"
+            href={whatsAppFallback}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            toque aqui para abrir a mensagem
+          </a>
+          .
         </p>
       )}
       {loading ? (
@@ -231,7 +274,7 @@ export default function AppointmentsPanel({ onAppointmentsChange }: Props) {
                       onClick={() => void updateStatus(appointment, "confirmed")}
                       type="button"
                     >
-                      Confirmar
+                      Confirmar e avisar
                     </button>
                   )}
                   <button
@@ -240,7 +283,9 @@ export default function AppointmentsPanel({ onAppointmentsChange }: Props) {
                     onClick={() => void updateStatus(appointment, "cancelled")}
                     type="button"
                   >
-                    {savingId === appointment.id ? "Salvando..." : "Cancelar"}
+                    {savingId === appointment.id
+                      ? "Salvando..."
+                      : "Cancelar e avisar"}
                   </button>
                 </div>
               </div>
