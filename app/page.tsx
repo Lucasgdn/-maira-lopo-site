@@ -1,5 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
+import BookingModal from "./lib/booking-modal";
+
+type BookingService = {
+  servico: string;
+  preco: string;
+  duracao: string;
+  duracaoMinutos: number;
+  imagem: string;
+};
 
 export default function Home() {
   const imagens = [
@@ -14,6 +23,7 @@ export default function Home() {
   const [indexServicosCarousel, setIndexServicosCarousel] = useState(0);
   const [indexExperiencia, setIndexExperiencia] = useState(0);
   const [indexRevista, setIndexRevista] = useState(0);
+  const [selectedService, setSelectedService] = useState<BookingService | null>(null);
 
   const servicosCarousel = [
     {
@@ -110,23 +120,24 @@ export default function Home() {
     servico: string;
     preco: string;
     duracao: string;
+    duracaoMinutos: number;
     imagem: string;
     promocao?: string;
   }> = [
-    { servico: "Mão", preco: "R$ 40,00", duracao: "40 min", imagem: "/esmaltacaoemgel1.jpeg" },
-    { servico: "Pé", preco: "R$ 45,00", duracao: "50 min", imagem: "/pedicuretradicional.jpeg" },
-    { servico: "Mão e Pé", preco: "R$ 80,00", duracao: "1h30", imagem: "/emgelpedicure.jpeg" },
-    { servico: "Esmaltação em Gel", preco: "R$ 110,00", duracao: "1h", imagem: "/esmaltacaoemgel2.jpeg" },
-    { servico: "Unhas Postiças Realistas", preco: "R$ 65,00", duracao: "1h", imagem: "/alomgamentodeunha1.jpeg" },
-    { servico: "Banho de Gel", preco: "R$ 130,00", duracao: "1h30", imagem: "/alongamentodeunha2.jpeg" },
-    { servico: "Alongamento", preco: "R$ 190,00", duracao: "2h", imagem: "/alongamentodeunha2.jpeg" },
-    { servico: "Manutenção de Alongamento", preco: "R$ 150,00", duracao: "1h30", imagem: "/alomgamentodeunha1.jpeg" },
-    { servico: "Spa das Mãos", preco: "R$ 40,00", duracao: "40 min", imagem: "/cuticularussaemgel.jpeg" },
-    { servico: "Spa Terapêutico", preco: "R$ 80,00", duracao: "1h", imagem: "/ambiente1.jpg" },
-    { servico: "Peeling de Calosidade", preco: "R$ 75,00", duracao: "50 min", imagem: "/pedicuregel.jpeg" },
-    { servico: "Escalda Pés", preco: "R$ 40,00", duracao: "30 min", imagem: "/pedicuretradicional.jpeg" },
-    { servico: "Esmaltação Tradicional Mão/Pé", preco: "R$ 25,00", duracao: "30 min", imagem: "/esmaltacaoemgel1.jpeg" },
-    { servico: "Blindagem", preco: "R$ 75,00", duracao: "40 min", imagem: "/cuticularussaemgel.jpeg" },
+    { servico: "Mão", preco: "R$ 40,00", duracao: "40 min", duracaoMinutos: 40, imagem: "/esmaltacaoemgel1.jpeg" },
+    { servico: "Pé", preco: "R$ 45,00", duracao: "50 min", duracaoMinutos: 50, imagem: "/pedicuretradicional.jpeg" },
+    { servico: "Mão e Pé", preco: "R$ 80,00", duracao: "1h30", duracaoMinutos: 90, imagem: "/emgelpedicure.jpeg" },
+    { servico: "Esmaltação em Gel", preco: "R$ 110,00", duracao: "1h", duracaoMinutos: 60, imagem: "/esmaltacaoemgel2.jpeg" },
+    { servico: "Unhas Postiças Realistas", preco: "R$ 65,00", duracao: "1h", duracaoMinutos: 60, imagem: "/alomgamentodeunha1.jpeg" },
+    { servico: "Banho de Gel", preco: "R$ 130,00", duracao: "1h30", duracaoMinutos: 90, imagem: "/alongamentodeunha2.jpeg" },
+    { servico: "Alongamento", preco: "R$ 190,00", duracao: "2h", duracaoMinutos: 120, imagem: "/alongamentodeunha2.jpeg" },
+    { servico: "Manutenção de Alongamento", preco: "R$ 150,00", duracao: "1h30", duracaoMinutos: 90, imagem: "/alomgamentodeunha1.jpeg" },
+    { servico: "Spa das Mãos", preco: "R$ 40,00", duracao: "40 min", duracaoMinutos: 40, imagem: "/cuticularussaemgel.jpeg" },
+    { servico: "Spa Terapêutico", preco: "R$ 80,00", duracao: "1h", duracaoMinutos: 60, imagem: "/ambiente1.jpg" },
+    { servico: "Peeling de Calosidade", preco: "R$ 75,00", duracao: "50 min", duracaoMinutos: 50, imagem: "/pedicuregel.jpeg" },
+    { servico: "Escalda Pés", preco: "R$ 40,00", duracao: "30 min", duracaoMinutos: 30, imagem: "/pedicuretradicional.jpeg" },
+    { servico: "Esmaltação Tradicional Mão/Pé", preco: "R$ 25,00", duracao: "30 min", duracaoMinutos: 30, imagem: "/esmaltacaoemgel1.jpeg" },
+    { servico: "Blindagem", preco: "R$ 75,00", duracao: "40 min", duracaoMinutos: 40, imagem: "/cuticularussaemgel.jpeg" },
   ];
 
   useEffect(() => {
@@ -231,8 +242,7 @@ export default function Home() {
           </p>
 
           <a
-            href="https://dottovip.com.br/mairalopoesmaltaria"
-            target="_blank"
+            href="#precos"
             className="inline-block mt-8 bg-[#d6ccc2] px-8 py-4 rounded-full shadow-md hover:scale-105 transition"
           >
             Agendar agora
@@ -508,14 +518,13 @@ export default function Home() {
                     <strong className="text-xl text-[#5c4a3f]">{item.preco}</strong>
                   </div>
 
-                  <a
-                    href="https://dottovip.com.br/mairalopoesmaltaria"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => setSelectedService(item)}
+                    type="button"
                     className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full border border-[#7a6a5a] px-6 py-3 font-semibold text-[#5c4a3f] transition hover:bg-[#7a6a5a] hover:text-white"
                   >
                     Agendar
-                  </a>
+                  </button>
                 </div>
               </article>
             ))}
@@ -532,12 +541,11 @@ export default function Home() {
         <h2 className="text-3xl font-bold">Agende seu horário</h2>
 
         <p className="mt-4 text-[#5c5c5c]">
-          Consulte horários disponíveis pelo WhatsApp.
+          Escolha um serviço e veja os horários disponíveis na nossa agenda.
         </p>
 
         <a
-          href="https://dottovip.com.br/mairalopoesmaltaria"
-          target="_blank"
+          href="#precos"
           className="inline-block mt-8 bg-green-500 text-white px-8 py-4 rounded-full shadow-md hover:scale-105 transition"
         >
           Agendar agora
@@ -559,6 +567,12 @@ export default function Home() {
           />
         </span>
       </a>
+      {selectedService && (
+        <BookingModal
+          onClose={() => setSelectedService(null)}
+          service={selectedService}
+        />
+      )}
 
       <div className="pb-4 text-center text-xs text-[#9a8f84]">
         Versao 1.0

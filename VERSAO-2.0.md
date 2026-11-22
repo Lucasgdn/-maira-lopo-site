@@ -2,25 +2,34 @@
 
 ## Situacao atual
 
-A versao atual do site permanece na versao 1.0. O agendamento continua sendo realizado pelo DottoVip e sera substituido pela agenda propria na versao 2.0.
+A versao publicada continua na versao 1.0. O codigo local ja substitui os links de agendamento por uma agenda propria, mas o fluxo so podera receber pedidos depois de publicar as regras atualizadas do Firestore e fazer o deploy do site.
 
 ## Objetivo da versao 2.0
 
 Criar uma agenda integrada ao site com procedimentos, duracoes, precos, profissionais, datas, horarios e confirmacao pelo WhatsApp.
 
+O painel administrativo em `/admin` usa Firebase Authentication, e-mail e senha, verifica uma lista de administradores no Firestore e oferece uma agenda semanal inspirada no Outlook, com eventos de bloqueio, configuracao da rotina por dia da semana e reservas de clientes com atalho para WhatsApp. O passo a passo esta em [FIREBASE-SETUP.md](./FIREBASE-SETUP.md).
+
+Os cards ja abrem um calendario publico com dias e horarios calculados a partir da disponibilidade do Firestore. Cada servico informa sua propria duracao; os inicios sao oferecidos a cada 15 minutos e o bloqueio usa o tempo exato em intervalos internos de 5 minutos. Reservas concorrentes sao protegidas por transacoes do Firestore.
+
+### Acesso e escopo inicial
+
+- A agenda sera inicialmente exclusiva da Maira; nao sera um produto white label nesta etapa.
+- Nao havera cadastro publico de administradores nem de profissionais.
+- A proprietaria controla quem recebe acesso e pode convidar/aprovar novas contas.
+- As clientes poderao agendar sem criar conta.
+- Novos acessos devem receber apenas as permissoes administrativas necessarias.
+- Uma futura versao white label exigira uma etapa separada de arquitetura para separar empresas e dados.
+
 ## Agenda propria
 
 ### Experiencia da cliente
 
-1. A cliente entra no site e acessa a secao de procedimentos.
-2. Cada procedimento tera um card com imagem, nome, descricao, duracao e preco.
-3. A cliente toca em "Agendar".
-4. O sistema mostra as profissionais disponiveis, quando houver mais de uma.
-5. A cliente escolhe o dia.
-6. O sistema mostra somente horarios realmente disponiveis.
-7. A cliente informa nome, WhatsApp e outros dados necessarios.
-8. A reserva e registrada.
-9. O WhatsApp recebe uma mensagem de confirmacao com o procedimento, profissional, data e horario.
+1. A cliente acessa os cards de procedimentos e toca em "Agendar".
+2. O calendario mostra dias e horarios compativeis com a agenda, bloqueios e duracao do servico.
+3. A cliente informa nome e WhatsApp obrigatorios.
+4. O pedido fica como pendente e ocupa os intervalos para evitar conflito.
+5. A Maira ve a reserva no painel, inicia uma conversa pelo WhatsApp e confirma ou cancela o pedido.
 
 ### Disponibilidade definida pela profissional
 
@@ -32,9 +41,9 @@ Ela tera um painel administrativo protegido por login para:
 - Bloquear feriados e dias inteiros.
 - Bloquear horarios individuais.
 - Registrar horarios ocupados por atendimentos feitos fora do site.
-- Visualizar agendamentos pendentes e confirmados.
-- Confirmar, remarcar ou cancelar reservas.
-- Escolher sua agenda ou selecionar a agenda de outra profissional.
+- Visualizar agendamentos pendentes e confirmados, tambem na agenda semanal.
+- Confirmar ou cancelar reservas e liberar o horario ao cancelar.
+- Usar a agenda da profissional que tiver disponibilidade.
 
 Exemplo de configuracao:
 
@@ -50,11 +59,11 @@ A versao 2.0 usara Firebase:
 - Firebase Authentication para o painel administrativo.
 - Cloud Firestore para profissionais, procedimentos, horarios, bloqueios e reservas.
 - Firestore Transactions para impedir reservas concorrentes.
-- Firebase Security Rules para impedir alteracoes indevidas.
+- Firebase Security Rules para manter os dados de clientes visiveis apenas para administradoras ativas.
 
 Cada reserva sera vinculada a:
 
-- Procedimento.
+- Procedimento, preco e duracao.
 - Profissional.
 - Data.
 - Horario inicial.
@@ -69,33 +78,23 @@ O sistema bloqueara automaticamente intervalos que tenham conflito. Duas reserva
 
 - Versao atual: 1.0.
 - Versao planejada: 2.0.
-- A versao 2.0 nao sera ativada antes da configuracao completa do Firebase.
+- O fluxo local so sera ativado publicamente depois da publicacao das regras atualizadas do Firestore e do deploy do site.
 - O identificador da versao deve ser exibido discretamente no sistema e centralizado em uma constante.
 
 ## Proximos passos
 
-1. Confirmar os procedimentos finais, duracoes e precos.
-2. Confirmar quantas profissionais farao atendimentos.
-3. Confirmar os dias e horarios de atendimento de cada profissional.
-4. Confirmar almocos, intervalos e dias nao atendidos.
-5. Criar o projeto Firebase.
-6. Configurar Authentication e Firestore.
-7. Criar as regras de acesso e reservas.
-8. Criar os cards de procedimentos.
-9. Criar o fluxo publico de agendamento.
-10. Criar o painel administrativo da profissional.
-11. Testar conflitos simultaneos de horarios.
-12. Testar cancelamentos, remarcacoes e bloqueios.
-13. Publicar a versao 2.0.
+1. Revisar se os servicos, duracoes e precos dos cards estao corretos.
+2. Conferir os dias, horarios e intervalos no painel.
+3. Publicar as regras atualizadas no Firebase.
+4. Testar uma reserva, um conflito simultaneo, um bloqueio e um cancelamento no Firebase real.
+5. Fazer deploy do site quando os testes forem aprovados.
 
 ## Nao definido ainda
 
-- Nome e quantidade das profissionais.
-- Horarios diarios e intervalos.
-- Feriados ou dias bloqueados.
-- Campos obrigatorios além de nome e WhatsApp.
+- Quantidade de profissionais e se a cliente deve escolher quem atende.
+- Campos adicionais alem de nome e WhatsApp.
 - Politica de cancelamento.
 - Prazo minimo para agendar.
 - Prazo minimo para cancelar ou remarcar.
 - Uso de pagamento antecipado.
-- Confirmacao manual ou automatica.
+- Politica de expiracao para pedidos pendentes.

@@ -1,0 +1,95 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isActiveAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
+    }
+
+    match /admins/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, create, update, delete: if false;
+    }
+
+    match /settings/availability {
+      allow get: if true;
+      allow write: if isActiveAdmin();
+    }
+
+    match /settings/{document=**} {
+      allow read, write: if isActiveAdmin();
+    }
+
+    match /appointments/{appointmentId} {
+      allow get, list: if isActiveAdmin();
+      allow create: if (request.auth == null || isActiveAdmin())
+        && request.resource.data.keys().hasOnly([
+          "customerName",
+          "customerPhone",
+          "service",
+          "price",
+          "durationMinutes",
+          "professionalId",
+          "professionalName",
+          "date",
+          "startTime",
+          "endTime",
+          "slotIds",
+          "status",
+          "createdAt"
+        ])
+        && request.resource.data.customerName is string
+        && request.resource.data.customerName.size() >= 2
+        && request.resource.data.customerName.size() <= 100
+        && request.resource.data.customerPhone is string
+        && request.resource.data.customerPhone.matches("^55[0-9]{10,11}$")
+        && request.resource.data["service"] is string
+        && request.resource.data["service"].size() <= 100
+        && request.resource.data.price is string
+        && request.resource.data.professionalId is string
+        && request.resource.data.professionalId.matches("^[A-Za-z0-9_-]{1,100}$")
+        && request.resource.data.professionalName is string
+        && request.resource.data.date.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+        && request.resource.data.startTime.matches("^([01][0-9]|2[0-3]):[0-5][0-9]$")
+        && request.resource.data.endTime.matches("^([01][0-9]|2[0-3]):[0-5][0-9]$")
+        && request.resource.data.durationMinutes is int
+        && request.resource.data.durationMinutes >= 5
+        && request.resource.data.durationMinutes <= 240
+        && request.resource.data.slotIds is list
+        && request.resource.data.slotIds.size() > 0
+        && request.resource.data.slotIds.size() <= 48
+        && request.resource.data.slotIds[0] is string
+        && request.resource.data.durationMinutes == request.resource.data.slotIds.size() * 5
+        && request.resource.data.status == "pending"
+        && request.resource.data.createdAt == request.time
+        && existsAfter(/databases/$(database)/documents/bookingSlots/$(request.resource.data.slotIds[0]))
+        && getAfter(/databases/$(database)/documents/bookingSlots/$(request.resource.data.slotIds[0])).data.appointmentId == appointmentId;
+      allow update, delete: if isActiveAdmin();
+    }
+
+    match /bookingSlots/{slotId} {
+      allow read: if true;
+      allow create: if (request.auth == null || isActiveAdmin())
+        && request.resource.data.keys().hasOnly([
+          "appointmentId",
+          "professionalId",
+          "date",
+          "time"
+        ])
+        && request.resource.data.appointmentId is string
+        && request.resource.data.professionalId is string
+        && request.resource.data.date.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+        && request.resource.data.time.matches("^([01][0-9]|2[0-3]):[0-5][0-9]$")
+        && slotId == request.resource.data.professionalId + "_" + request.resource.data.date + "_" + request.resource.data.time
+        && existsAfter(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId))
+        && getAfter(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.professionalId == request.resource.data.professionalId
+        && getAfter(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.date == request.resource.data.date
+        && getAfter(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.slotIds.hasAny([slotId])
+        && request.resource.data.time >= getAfter(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.startTime
+        && request.resource.data.time < getAfter(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.endTime;
+      allow update, delete: if isActiveAdmin();
+    }
+  }
+}
