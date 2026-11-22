@@ -638,27 +638,63 @@ export default function BookingModal({ service, onClose }: Props) {
           ) : (
             <>
           {availability.professionals.length > 1 && (
-            <label className="mb-5 block text-sm font-medium text-[#5c4a3f]">
-              Com quem deseja agendar?
-              <select
-                className={modalInputClass}
-                onChange={(event) => {
-                  setSelectedProfessionalId(event.target.value);
-                  setSelectedDate("");
-                  setSelectedStartTime("");
-                  setErrorMessage("");
-                }}
-                required
-                value={effectiveSelectedProfessionalId}
+            <section aria-labelledby="professional-choice-title" className="mb-5">
+              <h3
+                className="text-sm font-semibold text-[#5c4a3f]"
+                id="professional-choice-title"
               >
-                <option value="">Escolha uma profissional</option>
-                {availability.professionals.map((professional) => (
-                  <option key={professional.id} value={professional.id}>
-                    {professional.name || "Profissional"}
-                  </option>
-                ))}
-              </select>
-            </label>
+                Com quem deseja agendar?
+              </h3>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {availability.professionals.map((professional) => {
+                  const isSelected =
+                    professional.id === effectiveSelectedProfessionalId;
+                  const name = professional.name || "Profissional";
+                  return (
+                    <button
+                      aria-pressed={isSelected}
+                      className={`flex min-h-[76px] items-center gap-3 rounded-2xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a87551] focus-visible:ring-offset-2 ${
+                        isSelected
+                          ? "border-[#a87551] bg-[#f7eee8] ring-1 ring-[#a87551]"
+                          : "border-[#dfc6b4] bg-white hover:border-[#a87551]"
+                      }`}
+                      key={professional.id}
+                      onClick={() => {
+                        setSelectedProfessionalId(professional.id);
+                        setSelectedDate("");
+                        setSelectedStartTime("");
+                        setErrorMessage("");
+                      }}
+                      type="button"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-serif text-lg font-semibold ${
+                          isSelected
+                            ? "bg-[#a87551] text-white"
+                            : "bg-[#f3e7df] text-[#7a5543]"
+                        }`}
+                      >
+                        {name.slice(0, 1).toUpperCase()}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-semibold text-[#321f18]">
+                          {name}
+                        </span>
+                        <span className="mt-1 block text-xs text-[#6b625b]">
+                          Ver horarios disponíveis
+                        </span>
+                      </span>
+                      {isSelected && (
+                        <span className="shrink-0 text-sm font-semibold text-[#7a5543]">
+                          Selecionada
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           )}
           {availability.professionals.length > 1 && !selectedProfessional ? (
             <p className="rounded-xl bg-white p-4 text-sm text-[#6b625b]">
