@@ -28,7 +28,12 @@ function isSession(value: unknown): value is Session {
   );
 }
 
-export default function WhatsAppPanel() {
+type Props = {
+  compact?: boolean;
+  onOpen?: () => void;
+};
+
+export default function WhatsAppPanel({ compact = false, onOpen }: Props) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -109,6 +114,35 @@ export default function WhatsAppPanel() {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (compact) {
+    const status = loading
+      ? "Verificando conexão..."
+      : error
+        ? "Não foi possível verificar"
+        : !fresh || session?.status === "offline"
+          ? "Robô offline"
+          : session?.status === "connected"
+            ? "Conectado"
+            : session?.status === "error"
+              ? "Robô com falha"
+              : session?.status === "qr" && session.qr && qrFresh
+                ? "Aguardando leitura do QR"
+                : session?.status === "disconnecting"
+                  ? "Desconectando..."
+                  : "Aguardando o robô";
+    return (
+      <button
+        className="rounded-2xl border border-[#e8ddd4] bg-white p-5 text-left shadow-sm transition hover:border-[#c5aa97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7a6a5a]"
+        onClick={onOpen}
+        type="button"
+      >
+        <span className="text-sm font-medium text-[#766457]">WhatsApp</span>
+        <strong className="mt-3 block text-lg text-[#493a33]">{status}</strong>
+        <span className="mt-2 block text-sm font-semibold text-[#9a6b55]">Ver conexão →</span>
+      </button>
+    );
   }
 
   return (

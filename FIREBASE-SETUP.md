@@ -33,6 +33,12 @@ O menu do site tem o botao **Entrar**, alinhado a direita. Em telas estreitas, o
 
 O site e o painel mostram a versao atual no rodape. A secao recolhivel **Ajuda e suporte** explica como agendar ou administrar a agenda. O botao **Relatar um problema pelo WhatsApp** abre uma conversa com a Maira e uma mensagem inicial contextualizada ao site ou ao painel; a pessoa pode completar e enviar a mensagem.
 
+Depois do login, o painel abre no **Inicio**, com as reservas de hoje, pedidos
+aguardando contato e estado do WhatsApp. O menu lateral separa **Agenda**,
+**Reservas**, **Profissionais e horarios**, **WhatsApp** e **Ajuda e suporte**;
+no celular, abra o menu pelo botao no topo. Os atendimentos de hoje incluem
+reservas pendentes e confirmadas, mas nao incluem bloqueios manuais.
+
 ## Agenda e reservas
 
 O painel salva disponibilidade semanal, excecoes de datas e eventos manuais em `settings/availability`. A agenda administrativa tem uma visao semanal inspirada no Outlook e uma visualizacao adaptada para celular. Fechamentos de data podem ser removidos pelo botao **Reabrir** no proprio evento.

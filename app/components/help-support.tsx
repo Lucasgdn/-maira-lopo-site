@@ -20,8 +20,9 @@ export default function HelpSupport({ area }: Props) {
         <div className="mt-3 space-y-2 text-sm leading-relaxed text-[#6b625b]">
           <p>Entre com sua conta para acessar a agenda e as reservas.</p>
           <p>
-            Em <strong>Disponibilidade</strong>, ajuste os dias e horários de atendimento e
-            salve. Use <strong>Novo evento</strong> para bloquear um dia ou período.
+            Em <strong>Profissionais e horários</strong>, ajuste os dias e horários de
+            atendimento e salve. Na <strong>Agenda</strong>, use <strong>Novo evento</strong>
+            para bloquear um dia ou período.
           </p>
           <p>
             Nas reservas, confirme ou cancele o pedido. A ação atualiza a agenda e abre uma

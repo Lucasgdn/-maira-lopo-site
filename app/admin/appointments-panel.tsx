@@ -28,6 +28,7 @@ export type Appointment = {
 
 type Props = {
   onAppointmentsChange: (appointments: Appointment[]) => void;
+  onLoadStateChange: (state: "ready" | "error") => void;
 };
 
 type DaySchedule = {
@@ -259,7 +260,7 @@ function getReminderWhatsAppUrl(appointment: Appointment) {
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
 
-export default function AppointmentsPanel({ onAppointmentsChange }: Props) {
+export default function AppointmentsPanel({ onAppointmentsChange, onLoadStateChange }: Props) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState("");
@@ -286,6 +287,9 @@ export default function AppointmentsPanel({ onAppointmentsChange }: Props) {
           );
         setAppointments(loadedAppointments);
         onAppointmentsChange(loadedAppointments);
+        onLoadStateChange(
+          loadedAppointments.length === snapshot.docs.length ? "ready" : "error",
+        );
         setErrorMessage(
           loadedAppointments.length === snapshot.docs.length
             ? ""
@@ -294,13 +298,14 @@ export default function AppointmentsPanel({ onAppointmentsChange }: Props) {
         setLoading(false);
       },
       () => {
+        onLoadStateChange("error");
         setErrorMessage(
           "Nao foi possivel carregar as reservas. Confira sua conexao e as regras do Firestore.",
         );
         setLoading(false);
       },
     );
-  }, [onAppointmentsChange]);
+  }, [onAppointmentsChange, onLoadStateChange]);
 
   async function updateStatus(
     appointment: Appointment,

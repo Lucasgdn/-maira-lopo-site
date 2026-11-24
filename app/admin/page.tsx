@@ -16,6 +16,7 @@ import {
 } from "firebase/firestore";
 import AppointmentsPanel, { type Appointment } from "./appointments-panel";
 import WhatsAppPanel from "./whatsapp-panel";
+import AdminNavigation, { type AdminSection } from "./admin-navigation";
 import { firebaseAuth, firebaseConfigured, firestore } from "../lib/firebase";
 import HelpSupport from "../components/help-support";
 import { SITE_VERSION } from "../lib/site-config";
@@ -287,6 +288,8 @@ function getLegacySchedule(professional: Omit<ProfessionalSchedule, "weeklySched
 }
 
 export default function AdminPage() {
+  const [activeSection, setActiveSection] = useState<AdminSection>("inicio");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [authorized, setAuthorized] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(firebaseConfigured);
@@ -300,10 +303,12 @@ export default function AdminPage() {
   const [dateOverrides, setDateOverrides] = useState<Record<string, DateOverride>>({});
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointmentsState, setAppointmentsState] = useState<"loading" | "ready" | "error">("loading");
+  const [summaryDate, setSummaryDate] = useState(() => new Date());
   const [calendarProfessionalFilter, setCalendarProfessionalFilter] = useState("");
   const [dateOverrideLabel, setDateOverrideLabel] = useState("");
   const [bulkMondayEndTime, setBulkMondayEndTime] = useState("12:00");
-  const [todayDate] = useState(() => {
+  const [todayDate, setTodayDate] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), today.getDate());
   });
@@ -322,6 +327,19 @@ export default function AdminPage() {
     top: number;
     left: number;
   } | null>(null);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const now = new Date();
+      setSummaryDate(now);
+      setTodayDate((previous) =>
+        toDateKey(previous) === toDateKey(now)
+          ? previous
+          : new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+      );
+    }, 60000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!popoverPosition && !eventModalOpen) return;
@@ -345,8 +363,11 @@ export default function AdminPage() {
       if (!active) return;
       setUser(currentUser);
       setAuthorized(false);
+      setAppointments([]);
+      setAppointmentsState("loading");
 
       if (!currentUser) {
+        setActiveSection("inicio");
         setCheckingAccess(false);
         return;
       }
@@ -976,23 +997,63 @@ export default function AdminPage() {
     });
   });
 
-  return (
-    <main className="min-h-screen bg-[#f5ebe0] px-4 py-10 text-[#3e3e3e] sm:px-6">
-      <div className="mx-auto max-w-4xl">
-        <Link href="/" className="text-sm font-semibold text-[#7a6a5a] hover:underline">
-          Voltar ao site
-        </Link>
-        <header className="mb-8 mt-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#a36f5a]">
-            Maira Lopo
-          </p>
-          <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Painel administrativo</h1>
-          <p className="mt-2 text-[#6b625b]">
-            Gerencie quem atende e os horarios semanais disponiveis.
-          </p>
-        </header>
+  const todayAppointments = appointments.filter(
+    (appointment) => appointment.date === toDateKey(summaryDate) && appointment.status !== "cancelled",
+  );
+  const pendingAppointments = appointments.filter((appointment) => appointment.status === "pending");
 
-        <HelpSupport area="admin" />
+  function selectSection(section: AdminSection) {
+    setActiveSection(section);
+    setMenuOpen(false);
+    setPopoverPosition(null);
+    setEventModalOpen(false);
+    window.scrollTo({ top: 0 });
+  }
+
+  return (
+    <main className="min-h-screen bg-[#f8f2ed] text-[#3e3e3e]">
+      {authorized && (
+        <AdminNavigation
+          active={activeSection}
+          email={user?.email ?? null}
+          onClose={() => setMenuOpen(false)}
+          onLogout={() => void handleLogout()}
+          onSelect={selectSection}
+          open={menuOpen}
+        />
+      )}
+      <div className={authorized ? "md:pl-64" : ""}>
+        {authorized && (
+          <div className="sticky top-0 z-20 flex min-h-16 items-center gap-3 border-b border-[#e8ddd4] bg-white/95 px-4 backdrop-blur sm:px-8">
+            <button
+              aria-controls="admin-navigation"
+              aria-expanded={menuOpen}
+              aria-label="Abrir menu"
+              className="min-h-11 min-w-11 rounded-lg border border-[#e8ddd4] text-xl text-[#5c4a3f] md:hidden"
+              onClick={() => setMenuOpen(true)}
+              type="button"
+            >
+              ☰
+            </button>
+            <p className="text-sm text-[#8a7b6e]">Painel <span aria-hidden="true">/</span> <strong className="text-[#5c4a3f]">
+              {({ inicio: "Início", agenda: "Agenda", reservas: "Reservas", profissionais: "Profissionais e horários", whatsapp: "WhatsApp", ajuda: "Ajuda e suporte" })[activeSection]}
+            </strong></p>
+          </div>
+        )}
+        <div className={`mx-auto px-4 py-8 sm:px-8 ${authorized ? "max-w-7xl" : "max-w-4xl"}`}>
+        {!authorized && (
+          <>
+            <Link href="/" className="text-sm font-semibold text-[#7a6a5a] hover:underline">
+              Voltar ao site
+            </Link>
+            <header className="mb-8 mt-6">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#a36f5a]">Maira Lopo</p>
+              <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Painel administrativo</h1>
+              <p className="mt-2 text-[#6b625b]">Gerencie quem atende e os horarios semanais disponiveis.</p>
+            </header>
+            <HelpSupport area="admin" />
+          </>
+        )}
 
         {!firebaseConfigured ? (
           <section className="rounded-2xl border border-[#e5d7cb] bg-white p-6 shadow-sm sm:p-8">
@@ -1049,26 +1110,75 @@ export default function AdminPage() {
             </button>
           </form>
         ) : (
-          <section className="rounded-2xl border border-[#e5d7cb] bg-white p-6 shadow-sm sm:p-8">
-            <div className="flex flex-col justify-between gap-4 border-b border-[#e8ddd4] pb-5 sm:flex-row sm:items-center">
-              <div>
-                <h2 className="text-xl font-semibold">Agenda semanal</h2>
-                <p className="mt-1 text-sm text-[#6b625b]">
-                  Crie eventos para bloquear um dia inteiro ou um periodo.
-                </p>
-              </div>
-              <button
-                className="min-h-11 rounded-full border border-[#7a6a5a] px-5 py-2 text-sm font-semibold text-[#5c4a3f] hover:bg-[#f5ebe0]"
-                onClick={handleLogout}
-                type="button"
-              >
-                Sair
-              </button>
+          <section>
+            <div hidden={activeSection !== "inicio"}>
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#a36f5a]">Visão geral</p>
+              <h1 className="mt-2 text-3xl font-bold text-[#493a33]">Seu dia em resumo</h1>
+              <p className="mt-2 capitalize text-[#6b625b]">
+                {new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(summaryDate)}
+              </p>
             </div>
 
-            <WhatsAppPanel />
-            <AppointmentsPanel onAppointmentsChange={setAppointments} />
+            <div
+              className={activeSection === "inicio" ? "mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3" : ""}
+              hidden={activeSection !== "inicio" && activeSection !== "whatsapp"}
+            >
+              {activeSection === "inicio" && (
+                <>
+                  <button className="rounded-2xl border border-[#e8ddd4] bg-white p-5 text-left shadow-sm transition hover:border-[#c5aa97]" onClick={() => { setWeekStart(getWeekStart(summaryDate)); setSelectedDate(summaryDate); selectSection("agenda"); }} type="button">
+                    <span className="text-sm font-medium text-[#766457]">Atendimentos de hoje</span>
+                    <strong className="mt-3 block text-2xl text-[#493a33]">{appointmentsState === "ready" ? todayAppointments.length : "—"}</strong>
+                    <span className="mt-2 block text-sm font-semibold text-[#9a6b55]">Ver agenda →</span>
+                  </button>
+                  <button className="rounded-2xl border border-[#e8ddd4] bg-white p-5 text-left shadow-sm transition hover:border-[#c5aa97]" onClick={() => selectSection("reservas")} type="button">
+                    <span className="text-sm font-medium text-[#766457]">Pedidos aguardando contato</span>
+                    <strong className="mt-3 block text-2xl text-[#493a33]">{appointmentsState === "ready" ? pendingAppointments.length : "—"}</strong>
+                    <span className="mt-2 block text-sm font-semibold text-[#9a6b55]">Ver reservas →</span>
+                  </button>
+                </>
+              )}
+              <WhatsAppPanel compact={activeSection === "inicio"} onOpen={() => selectSection("whatsapp")} />
+            </div>
 
+            <div hidden={activeSection !== "inicio"}>
+              <section className="mt-6 rounded-2xl border border-[#e8ddd4] bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-[#493a33]">Atendimentos de hoje</h2>
+                    <p className="mt-1 text-sm text-[#6b625b]">Reservas pendentes e confirmadas para hoje.</p>
+                  </div>
+                  <button className="min-h-10 text-sm font-semibold text-[#9a6b55] underline" onClick={() => selectSection("reservas")} type="button">Ver reservas</button>
+                </div>
+                {appointmentsState === "loading" ? (
+                  <p className="mt-5 text-sm text-[#6b625b]" role="status">Carregando reservas...</p>
+                ) : appointmentsState === "error" ? (
+                  <p className="mt-5 text-sm text-red-700" role="alert">Não foi possível exibir o resumo completo. Confira a área de reservas.</p>
+                ) : todayAppointments.length === 0 ? (
+                  <p className="mt-5 rounded-xl bg-[#fffaf5] p-4 text-sm text-[#6b625b]">Nenhum atendimento marcado para hoje.</p>
+                ) : (
+                  <ul className="mt-4 divide-y divide-[#f1e8e1]">
+                    {todayAppointments.map((appointment) => (
+                      <li className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3 text-sm" key={appointment.id}>
+                        <strong className="text-[#754a38]">{appointment.startTime}</strong>
+                        <span className="flex-1">{appointment.customerName} · {appointment.service} · {appointment.professionalName}</span>
+                        <span className="rounded-full bg-[#f8f2ed] px-3 py-1 text-xs text-[#6b625b]">{appointment.status === "pending" ? "Aguardando contato" : "Confirmado"}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+
+            <div hidden={activeSection !== "reservas"}>
+              <h1 className="text-2xl font-bold text-[#493a33]">Reservas</h1>
+              <AppointmentsPanel onAppointmentsChange={setAppointments} onLoadStateChange={setAppointmentsState} />
+            </div>
+
+            <div hidden={activeSection !== "agenda"}>
+            <div>
+              <h1 className="text-2xl font-bold text-[#493a33]">Agenda semanal</h1>
+              <p className="mt-2 text-sm text-[#6b625b]">Crie eventos para bloquear um dia inteiro ou um periodo.</p>
+            </div>
             <section className="mt-6 overflow-hidden rounded-2xl border border-[#e5d7cb] bg-white shadow-sm">
               <div className="flex flex-col gap-3 border-b border-[#e8ddd4] p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
@@ -1896,23 +2006,13 @@ export default function AdminPage() {
               </div>
             )}
 
-            <aside
-              aria-labelledby="booking-status-title"
-              className="mt-4 rounded-xl border border-[#e7cda9] bg-[#fff8ed] p-4 sm:p-5"
-            >
-              <h3 className="font-semibold text-[#6b4d2e]" id="booking-status-title">
-                Este calendario mostra apenas os dias de atendimento
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#6b625b]">
-                As reservas de clientes ainda nao estao ativadas. Por isso, ele nao mostra
-                horarios ocupados nem confirma horarios livres para agendamento.
-              </p>
-            </aside>
+            </div>
 
-            <details className="mt-6 rounded-xl border border-[#e8ddd4] bg-white">
-              <summary className="cursor-pointer rounded-xl px-4 py-4 font-semibold text-[#5c4a3f] hover:bg-[#fffaf5] sm:px-5">
-                Editar horarios de atendimento
-              </summary>
+            <div hidden={activeSection !== "profissionais"}>
+              <h1 className="text-2xl font-bold text-[#493a33]">Profissionais e horários</h1>
+              <p className="mt-2 text-sm text-[#6b625b]">Organize a equipe e a rotina de atendimento.</p>
+            <section className="mt-6 rounded-xl border border-[#e8ddd4] bg-white">
+              <h2 className="px-4 py-4 font-semibold text-[#5c4a3f] sm:px-5">Editar horarios de atendimento</h2>
               <form
                 className="border-t border-[#e8ddd4] p-4 sm:p-5"
                 onSubmit={handleSaveSchedule}
@@ -2104,7 +2204,12 @@ export default function AdminPage() {
                 </button>
               </div>
               </form>
-            </details>
+            </section>
+            </div>
+            <div hidden={activeSection !== "ajuda"}>
+              <h1 className="text-2xl font-bold text-[#493a33]">Ajuda e suporte</h1>
+              <HelpSupport area="admin" />
+            </div>
           </section>
         )}
 
@@ -2128,6 +2233,7 @@ export default function AdminPage() {
         <p className="mt-8 text-center text-xs text-[#8a7b6e]">
           Versão {SITE_VERSION}
         </p>
+        </div>
       </div>
     </main>
   );
