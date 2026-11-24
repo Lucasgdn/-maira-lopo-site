@@ -4,26 +4,20 @@ import { disconnectWhatsApp } from "./disconnect.mjs";
 
 test("confirms logout after navigation only when the pairing screen appears", async () => {
   const navigationError = new Error("Execution context was destroyed, most likely because of a navigation.");
-  let observed = false;
   await disconnectWhatsApp({
     logout: async () => { throw navigationError; },
-    waPage: { waitForFunction: async (_check, options) => {
-      assert.equal(options.timeout, 90000);
-      observed = true;
-    } },
-  });
-  assert.equal(observed, true);
+  }, Promise.resolve());
 
   await assert.rejects(disconnectWhatsApp({
     logout: async () => { throw navigationError; },
-    waPage: { waitForFunction: async () => { throw new Error("timeout"); } },
-  }), /nao confirmou a desconexao/);
+  }, Promise.reject(new Error("timeout"))), /nao confirmou a desconexao/);
   await assert.rejects(disconnectWhatsApp({
     logout: async () => { throw new Error("outra falha"); },
-  }), /outra falha/);
+  }, Promise.resolve()), /outra falha/);
 });
 
-test("publishes the QR and disconnects only the current session", async () => {
+for (const mode of ["normal", "navigation"]) {
+test(`publishes the QR and disconnects only the current session (${mode})`, async () => {
   const previous = {};
   for (const name of ["BOT_FIREBASE_API_KEY", "BOT_FIREBASE_PROJECT_ID",
     "BOT_FIREBASE_AUTH_DOMAIN", "BOT_EMAIL", "BOT_PASSWORD"]) {
@@ -33,13 +27,21 @@ test("publishes the QR and disconnects only the current session", async () => {
   let state;
   const statuses = [];
   let onCommand;
+  let onQr;
   let logouts = 0;
   let closes = 0;
   let finish;
   const finished = new Promise((resolve) => { finish = resolve; });
   const fakeTime = { toMillis: () => Date.now() };
   const fakeClient = {
-    logout: async () => { logouts++; return true; },
+    logout: async () => {
+      logouts++;
+      if (mode === "navigation") {
+        setImmediate(() => onQr("data:image/png;base64,BBBB"));
+        throw new Error("Execution context was destroyed, most likely because of a navigation.");
+      }
+      return true;
+    },
     close: async () => { closes++; },
     isConnected: async () => true,
     onStateChange: () => {},
@@ -69,6 +71,7 @@ test("publishes the QR and disconnects only the current session", async () => {
   } });
   mock.module("@wppconnect-team/wppconnect", { exports: { default: {
     create: async (options) => {
+      onQr = options.catchQR;
       options.catchQR("data:image/png;base64,AAAA");
       await new Promise((resolve) => setImmediate(resolve));
       return fakeClient;
@@ -76,7 +79,7 @@ test("publishes the QR and disconnects only the current session", async () => {
   } } });
 
   try {
-    await import("./index.mjs");
+    await import(`./index.mjs?case=${mode}`);
     assert.ok(statuses.some((entry) => entry.status === "qr" && entry.qr));
     assert.equal(state.status, "connected");
     assert.equal(state.qr, null);
@@ -102,3 +105,4 @@ test("publishes the QR and disconnects only the current session", async () => {
     }
   }
 });
+}

@@ -1,4 +1,4 @@
-export async function disconnectWhatsApp(client) {
+export async function disconnectWhatsApp(client, pairingScreen) {
   try {
     if (!(await client.logout())) {
       throw new Error("O WhatsApp nao confirmou a desconexao.");
@@ -8,17 +8,21 @@ export async function disconnectWhatsApp(client) {
       throw error;
     }
 
+    let timer;
     try {
-      await client.waPage.waitForFunction(
-        () => Boolean(document.querySelector("body > div > div > .landing-wrapper") &&
-          document.querySelector("canvas")),
-        { timeout: 90000 },
-      );
+      await Promise.race([
+        pairingScreen,
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error("Tempo esgotado.")), 90000);
+        }),
+      ]);
     } catch (reason) {
       throw new Error(
         "O WhatsApp nao confirmou a desconexao. Confira Dispositivos conectados no celular.",
         { cause: reason },
       );
+    } finally {
+      clearTimeout(timer);
     }
   }
 }

@@ -48,6 +48,7 @@ async function main() {
   let heartbeat;
   let heartbeatRunning = false;
   let unsubscribe;
+  let confirmLogoutQr;
   let queue = Promise.resolve();
 
   async function writeState(next, claim = false) {
@@ -89,6 +90,9 @@ async function main() {
         if (!client) {
           throw new Error("O WhatsApp nao confirmou a desconexao.");
         }
+        const pairingScreen = new Promise((resolve) => {
+          confirmLogoutQr = resolve;
+        });
         let refreshError;
         const disconnectHeartbeat = setInterval(() => {
           void publish({}).catch((error) => {
@@ -97,9 +101,10 @@ async function main() {
           });
         }, 15000);
         try {
-          await disconnectWhatsApp(client);
+          await disconnectWhatsApp(client, pairingScreen);
         } finally {
           clearInterval(disconnectHeartbeat);
+          confirmLogoutQr = undefined;
         }
         await queue;
         if (refreshError) throw refreshError;
@@ -173,6 +178,13 @@ async function main() {
       disableGoogleAnalytics: true,
       autoClose: 120000,
       catchQR: (image) => {
+        if (stopping && confirmLogoutQr) {
+          if (typeof image === "string" && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(image) &&
+              image.length <= 150000) {
+            confirmLogoutQr();
+          }
+          return;
+        }
         if (connected || stopping) return;
         if (typeof image !== "string" || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(image) ||
             image.length > 150000) {
