@@ -42,7 +42,7 @@ const help: Record<HelpSection, { title: string; tips: string[] }> = {
     title: "Profissionais e horários",
     tips: [
       "Adicione ou remova profissionais e ajuste os dias, horários e intervalos de cada uma.",
-      "Os atalhos semanais aplicam mudanças à equipe. Confira os horários antes de salvar.",
+      "Toque em um dia para editar seus horários. Abra Atalhos semanais para aplicar mudanças à equipe.",
       "Clique em Salvar disponibilidade para que as alterações entrem em vigor.",
     ],
   },

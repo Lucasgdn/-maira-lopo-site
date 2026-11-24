@@ -119,15 +119,17 @@ function getCalendarEventPositions(events: DisplayCalendarEvent[]) {
 const weekdayNames = [
   "Domingo",
   "Segunda",
-  "Terca",
+  "Terça",
   "Quarta",
   "Quinta",
   "Sexta",
-  "Sabado",
+  "Sábado",
 ];
 
 const inputClassName =
   "mt-1 min-h-11 w-full rounded-lg border border-[#d9c9bc] bg-white px-3 text-[#3e3e3e] outline-none focus:border-[#7a6a5a] focus:ring-2 focus:ring-[#7a6a5a]/20";
+
+const scheduleTimeInputClassName = `${inputClassName} block min-w-0 max-w-full appearance-none`;
 
 function isDaySchedule(value: unknown): value is DaySchedule {
   return (
@@ -308,6 +310,7 @@ export default function AdminPage() {
   const [calendarProfessionalFilter, setCalendarProfessionalFilter] = useState("");
   const [dateOverrideLabel, setDateOverrideLabel] = useState("");
   const [bulkMondayEndTime, setBulkMondayEndTime] = useState("12:00");
+  const [expandedScheduleDays, setExpandedScheduleDays] = useState<string[]>([]);
   const [todayDate, setTodayDate] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -592,31 +595,35 @@ export default function AdminPage() {
       return;
     }
 
-    const invalidSchedule = professionals.some((professional) => {
-      const openDays = Object.values(professional.weeklySchedule).filter(
-        (schedule) => schedule.open,
-      );
-      return (
-        !professional.name.trim() ||
-        openDays.some((schedule) => {
-          const hasBreak = schedule.breakStart || schedule.breakEnd;
-          return (
-            !schedule.startTime ||
-            !schedule.endTime ||
-            schedule.startTime >= schedule.endTime ||
-            (hasBreak &&
-              (!schedule.breakStart ||
-                !schedule.breakEnd ||
-                schedule.breakStart >= schedule.breakEnd ||
-                schedule.breakStart < schedule.startTime ||
-                schedule.breakEnd > schedule.endTime))
-          );
-        })
-      );
-    });
+    const invalidName = professionals.find((professional) => !professional.name.trim());
+    if (invalidName) {
+      setMessage("Informe o nome de cada profissional.");
+      setIsError(true);
+      return;
+    }
 
-    if (invalidSchedule) {
-      setMessage("Revise os nomes, dias, horarios de atendimento e intervalos.");
+    const invalidDays = professionals.flatMap((professional) =>
+      weekdayNames.flatMap((day, dayIndex) => {
+        const schedule = professional.weeklySchedule[dayIndex];
+        const hasBreak = schedule.breakStart || schedule.breakEnd;
+        const invalid = schedule.open && (
+          !schedule.startTime ||
+          !schedule.endTime ||
+          schedule.startTime >= schedule.endTime ||
+          (hasBreak &&
+            (!schedule.breakStart ||
+              !schedule.breakEnd ||
+              schedule.breakStart >= schedule.breakEnd ||
+              schedule.breakStart < schedule.startTime ||
+              schedule.breakEnd > schedule.endTime))
+        );
+        return invalid ? [{ key: `${professional.id}:${dayIndex}`, day, name: professional.name }] : [];
+      }),
+    );
+
+    if (invalidDays.length > 0) {
+      setExpandedScheduleDays((current) => [...new Set([...current, ...invalidDays.map((day) => day.key)])]);
+      setMessage(`Revise os horários e intervalos de ${invalidDays[0].name} em ${invalidDays[0].day}.`);
       setIsError(true);
       return;
     }
@@ -1004,6 +1011,7 @@ export default function AdminPage() {
 
   function selectSection(section: AdminSection) {
     setActiveSection(section);
+    setMessage("");
     setMenuOpen(false);
     setPopoverPosition(null);
     setEventModalOpen(false);
@@ -2020,14 +2028,14 @@ export default function AdminPage() {
                 className="border-t border-[#e8ddd4] p-4 sm:p-5"
                 onSubmit={handleSaveSchedule}
               >
-              <div className="mb-5 rounded-xl bg-[#fffaf5] p-4">
-                <h3 className="font-semibold">Atalhos semanais</h3>
-                <p className="mt-1 text-sm text-[#6b625b]">
-                  Feche domingos de uma vez. Para fechar so a tarde de segunda, ajuste o
-                  fim do atendimento de segunda para 12:00.
-                </p>
-                <p className="mt-1 text-sm font-medium text-[#6b625b]">
-                  As mudancas semanais so entram em vigor depois de clicar em “Salvar disponibilidade”.
+              <details className="group mb-5 rounded-xl border border-[#eee4dc] bg-[#fffaf5]">
+                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-semibold text-[#5c4a3f] [&::-webkit-details-marker]:hidden">
+                  Atalhos semanais
+                  <span aria-hidden="true" className="text-xl transition group-open:rotate-180">⌄</span>
+                </summary>
+                <div className="border-t border-[#eee4dc] p-4">
+                <p className="text-sm text-[#6b625b]">
+                  Aplique os mesmos ajustes a todas as profissionais. As mudanças só entram em vigor ao salvar.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
@@ -2044,11 +2052,11 @@ export default function AdminPage() {
                   >
                     Abrir domingos
                   </button>
-                  <label className="flex items-center gap-2 text-sm">
-                    Segunda ate
+                  <label className="flex flex-wrap items-center gap-2 text-sm">
+                    Segunda até
                     <input
-                      aria-label="Horario para encerrar as segundas-feiras"
-                      className="min-h-10 rounded-lg border border-[#d9c9bc] bg-white px-2"
+                      aria-label="Horário para encerrar as segundas-feiras"
+                      className="min-h-10 w-28 min-w-0 max-w-full appearance-none rounded-lg border border-[#d9c9bc] bg-white px-2"
                       onChange={(event) => setBulkMondayEndTime(event.target.value)}
                       type="time"
                       value={bulkMondayEndTime}
@@ -2062,7 +2070,8 @@ export default function AdminPage() {
                     </button>
                   </label>
                 </div>
-              </div>
+                </div>
+              </details>
               {professionals.length === 0 ? (
                 <p className="rounded-xl bg-[#fffaf5] p-5 text-sm text-[#6b625b]">
                   Ainda nao ha profissionais cadastradas. Adicione uma para configurar os
@@ -2072,11 +2081,11 @@ export default function AdminPage() {
                 <div className="space-y-6">
                   {professionals.map((professional, index) => (
                     <fieldset
-                      className="rounded-xl border border-[#e8ddd4] p-4 sm:p-5"
+                      className="min-w-0 rounded-xl border border-[#e8ddd4] p-4 sm:p-5"
                       key={professional.id}
                     >
                       <legend className="px-2 font-semibold">
-                        Profissional {index + 1}
+                        {professional.name.trim() || `Profissional ${index + 1}`}
                       </legend>
                       <label className="block text-sm font-medium">
                         Nome
@@ -2090,16 +2099,38 @@ export default function AdminPage() {
                         />
                       </label>
 
-                      <div className="mt-5 space-y-3">
+                      <div className="mt-5 space-y-2">
                         <h3 className="text-sm font-semibold">Rotina que se repete toda semana</h3>
+                        <p className="text-xs text-[#6b625b]">Toque em um dia para editar os horários.</p>
                         {weekdayNames.map((day, dayIndex) => {
                           const schedule = professional.weeklySchedule[dayIndex];
+                          const dayKey = `${professional.id}:${dayIndex}`;
                           return (
-                            <fieldset
-                              className="rounded-xl border border-[#eee4dc] p-3 sm:p-4"
+                            <details
+                              className="group rounded-xl border border-[#eee4dc] bg-[#fffdfb]"
                               key={day}
+                              onToggle={(event) => {
+                                const isOpen = event.currentTarget.open;
+                                setExpandedScheduleDays((current) =>
+                                  isOpen
+                                    ? [...new Set([...current, dayKey])]
+                                    : current.filter((key) => key !== dayKey),
+                                );
+                              }}
+                              open={expandedScheduleDays.includes(dayKey)}
                             >
-                              <legend className="px-1 text-sm font-semibold">{day}</legend>
+                              <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7a6a5a] [&::-webkit-details-marker]:hidden">
+                                <span className="min-w-0 flex-1 font-semibold text-[#493a33]">{day}</span>
+                                <span className="text-right text-xs text-[#6b625b]">
+                                  {schedule.open
+                                    ? schedule.startTime && schedule.endTime
+                                      ? `${schedule.startTime} – ${schedule.endTime}`
+                                      : "Horário incompleto"
+                                    : "Fechado"}
+                                </span>
+                                <span aria-hidden="true" className="text-lg text-[#8a7b6e] transition group-open:rotate-180">⌄</span>
+                              </summary>
+                              <div className="border-t border-[#eee4dc] p-3 sm:p-4">
                               <label className="flex min-h-10 items-center gap-2 text-sm">
                                 <input
                                   checked={schedule.open}
@@ -2117,13 +2148,12 @@ export default function AdminPage() {
                                   <label className="min-w-0 text-xs font-medium sm:text-sm">
                                     Abre
                                     <input
-                                      className={inputClassName}
+                                      className={scheduleTimeInputClassName}
                                       onChange={(event) =>
                                         updateProfessionalDay(professional.id, dayIndex, {
                                           startTime: event.target.value,
                                         })
                                       }
-                                      required
                                       type="time"
                                       value={schedule.startTime}
                                     />
@@ -2131,13 +2161,12 @@ export default function AdminPage() {
                                   <label className="min-w-0 text-xs font-medium sm:text-sm">
                                     Fecha
                                     <input
-                                      className={inputClassName}
+                                      className={scheduleTimeInputClassName}
                                       onChange={(event) =>
                                         updateProfessionalDay(professional.id, dayIndex, {
                                           endTime: event.target.value,
                                         })
                                       }
-                                      required
                                       type="time"
                                       value={schedule.endTime}
                                     />
@@ -2145,7 +2174,7 @@ export default function AdminPage() {
                                   <label className="min-w-0 text-xs font-medium sm:text-sm">
                                     Inicio do intervalo (opcional)
                                     <input
-                                      className={inputClassName}
+                                      className={scheduleTimeInputClassName}
                                       onChange={(event) =>
                                         updateProfessionalDay(professional.id, dayIndex, {
                                           breakStart: event.target.value,
@@ -2158,7 +2187,7 @@ export default function AdminPage() {
                                   <label className="min-w-0 text-xs font-medium sm:text-sm">
                                     Fim do intervalo
                                     <input
-                                      className={inputClassName}
+                                      className={scheduleTimeInputClassName}
                                       onChange={(event) =>
                                         updateProfessionalDay(professional.id, dayIndex, {
                                           breakEnd: event.target.value,
@@ -2170,7 +2199,8 @@ export default function AdminPage() {
                                   </label>
                                 </div>
                               )}
-                            </fieldset>
+                              </div>
+                            </details>
                           );
                         })}
                       </div>
@@ -2190,16 +2220,23 @@ export default function AdminPage() {
                 </div>
               )}
 
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-6">
                 <button
-                  className="min-h-12 rounded-full border border-[#7a6a5a] px-6 py-3 font-semibold text-[#5c4a3f] hover:bg-[#f5ebe0]"
+                  className="min-h-11 w-full rounded-xl border border-[#7a6a5a] px-5 py-2 text-sm font-semibold text-[#5c4a3f] hover:bg-[#f5ebe0] sm:w-auto"
                   onClick={addProfessional}
                   type="button"
                 >
-                  Adicionar profissional
+                  + Adicionar profissional
                 </button>
+              </div>
+              <div className="sticky bottom-0 z-10 -mx-4 mt-4 border-t border-[#e8ddd4] bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_20px_rgba(80,55,40,0.06)] sm:static sm:mx-0 sm:mt-4 sm:border-0 sm:p-0 sm:shadow-none">
+                {message && (
+                  <p aria-live="polite" className={`mb-3 text-sm ${isError ? "text-red-700" : "text-green-800"}`} role={isError ? "alert" : "status"}>
+                    {message}
+                  </p>
+                )}
                 <button
-                  className="min-h-12 rounded-full bg-[#7a6a5a] px-6 py-3 font-semibold text-white hover:bg-[#655648] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="min-h-12 w-full rounded-xl bg-[#7a6a5a] px-6 py-3 font-semibold text-white hover:bg-[#655648] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                   disabled={saving || professionals.length === 0}
                   type="submit"
                 >
@@ -2212,7 +2249,7 @@ export default function AdminPage() {
           </section>
         )}
 
-        {message && (
+        {message && (!authorized || activeSection !== "profissionais") && (
           <p
             aria-live="polite"
             className={`mt-5 rounded-xl p-4 text-sm ${
