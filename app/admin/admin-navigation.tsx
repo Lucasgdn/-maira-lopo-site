@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 
-export type AdminSection = "inicio" | "agenda" | "reservas" | "profissionais" | "whatsapp" | "ajuda";
+export type AdminSection = "inicio" | "agenda" | "reservas" | "profissionais" | "whatsapp";
 
 const items: { id: AdminSection; label: string; icon: string }[] = [
   { id: "inicio", label: "Início", icon: "⌂" },
@@ -11,7 +11,6 @@ const items: { id: AdminSection; label: string; icon: string }[] = [
   { id: "reservas", label: "Reservas", icon: "☷" },
   { id: "profissionais", label: "Profissionais e horários", icon: "◷" },
   { id: "whatsapp", label: "WhatsApp", icon: "◌" },
-  { id: "ajuda", label: "Ajuda e suporte", icon: "?" },
 ];
 
 type Props = {

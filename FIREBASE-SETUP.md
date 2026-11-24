@@ -31,11 +31,15 @@ Configure as mesmas seis variaveis `NEXT_PUBLIC_FIREBASE_*` nas variaveis de amb
 
 O menu do site tem o botao **Entrar**, alinhado a direita. Em telas estreitas, os links do menu podem rolar horizontalmente sem esconder o botao.
 
-O site e o painel mostram a versao atual no rodape. A secao recolhivel **Ajuda e suporte** explica como agendar ou administrar a agenda. O botao **Relatar um problema pelo WhatsApp** abre uma conversa com a Maira e uma mensagem inicial contextualizada ao site ou ao painel; a pessoa pode completar e enviar a mensagem.
+O site e o painel mostram a versao atual no rodape. No site, a secao recolhivel
+**Ajuda e suporte** explica como agendar. No painel, o botao **?** no canto
+superior direito mostra instrucoes para a tela atual, inclusive na tela de
+login. A ajuda oferece um link para relatar problemas pelo WhatsApp com uma
+mensagem contextualizada; a pessoa pode completa-la antes de enviar.
 
 Depois do login, o painel abre no **Inicio**, com as reservas de hoje, pedidos
 aguardando contato e estado do WhatsApp. O menu lateral separa **Agenda**,
-**Reservas**, **Profissionais e horarios**, **WhatsApp** e **Ajuda e suporte**;
+**Reservas**, **Profissionais e horarios** e **WhatsApp**;
 no celular, abra o menu pelo botao no topo. Os atendimentos de hoje incluem
 reservas pendentes e confirmadas, mas nao incluem bloqueios manuais.
 

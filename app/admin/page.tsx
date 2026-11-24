@@ -17,8 +17,8 @@ import {
 import AppointmentsPanel, { type Appointment } from "./appointments-panel";
 import WhatsAppPanel from "./whatsapp-panel";
 import AdminNavigation, { type AdminSection } from "./admin-navigation";
+import AdminHelp from "./admin-help";
 import { firebaseAuth, firebaseConfigured, firestore } from "../lib/firebase";
-import HelpSupport from "../components/help-support";
 import { SITE_VERSION } from "../lib/site-config";
 
 type ProfessionalSchedule = {
@@ -1036,22 +1036,25 @@ export default function AdminPage() {
               ☰
             </button>
             <p className="text-sm text-[#8a7b6e]">Painel <span aria-hidden="true">/</span> <strong className="text-[#5c4a3f]">
-              {({ inicio: "Início", agenda: "Agenda", reservas: "Reservas", profissionais: "Profissionais e horários", whatsapp: "WhatsApp", ajuda: "Ajuda e suporte" })[activeSection]}
+              {({ inicio: "Início", agenda: "Agenda", reservas: "Reservas", profissionais: "Profissionais e horários", whatsapp: "WhatsApp" })[activeSection]}
             </strong></p>
+            <AdminHelp key={activeSection} section={activeSection} />
           </div>
         )}
         <div className={`mx-auto px-4 py-8 sm:px-8 ${authorized ? "max-w-7xl" : "max-w-4xl"}`}>
         {!authorized && (
           <>
-            <Link href="/" className="text-sm font-semibold text-[#7a6a5a] hover:underline">
-              Voltar ao site
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link href="/" className="text-sm font-semibold text-[#7a6a5a] hover:underline">
+                Voltar ao site
+              </Link>
+              <AdminHelp section="login" />
+            </div>
             <header className="mb-8 mt-6">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#a36f5a]">Maira Lopo</p>
               <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Painel administrativo</h1>
               <p className="mt-2 text-[#6b625b]">Gerencie quem atende e os horarios semanais disponiveis.</p>
             </header>
-            <HelpSupport area="admin" />
           </>
         )}
 
@@ -2205,10 +2208,6 @@ export default function AdminPage() {
               </div>
               </form>
             </section>
-            </div>
-            <div hidden={activeSection !== "ajuda"}>
-              <h1 className="text-2xl font-bold text-[#493a33]">Ajuda e suporte</h1>
-              <HelpSupport area="admin" />
             </div>
           </section>
         )}
