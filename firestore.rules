@@ -8,6 +8,12 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
     }
 
+    function isActiveBot() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/botOperators/$(request.auth.uid))
+        && get(/databases/$(database)/documents/botOperators/$(request.auth.uid)).data.active == true;
+    }
+
     match /admins/{uid} {
       allow get: if request.auth != null && request.auth.uid == uid;
       allow list, create, update, delete: if false;
@@ -20,6 +26,41 @@ service cloud.firestore {
 
     match /settings/{document=**} {
       allow read, write: if isActiveAdmin();
+    }
+
+    match /botOperators/{uid} {
+      allow read, write: if false;
+    }
+
+    match /botSessions/whatsapp {
+      allow get: if isActiveAdmin() || isActiveBot();
+      allow list, delete: if false;
+      allow create, update: if isActiveBot()
+        && request.resource.data.keys().hasOnly([
+          "runId", "status", "qr", "qrAt", "updatedAt"
+        ])
+        && request.resource.data.runId is string
+        && request.resource.data.runId.matches("^[a-f0-9-]{36}$")
+        && request.resource.data.status in [
+          "starting", "qr", "connected", "disconnecting", "offline", "error"
+        ]
+        && (request.resource.data.qr == null
+          || (request.resource.data.qr is string
+            && request.resource.data.qr.size() <= 150000))
+        && (request.resource.data.qrAt == null || request.resource.data.qrAt is timestamp)
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /botCommands/whatsapp {
+      allow get: if isActiveAdmin() || isActiveBot();
+      allow list, delete: if false;
+      allow create, update: if isActiveAdmin()
+        && request.resource.data.keys().hasOnly(["runId", "requestId", "requestedAt"])
+        && request.resource.data.runId is string
+        && request.resource.data.runId.matches("^[a-f0-9-]{36}$")
+        && request.resource.data.requestId is string
+        && request.resource.data.requestId.matches("^[a-f0-9-]{36}$")
+        && request.resource.data.requestedAt == request.time;
     }
 
     match /appointments/{appointmentId} {

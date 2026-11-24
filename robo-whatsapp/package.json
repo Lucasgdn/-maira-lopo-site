@@ -1,0 +1,21 @@
+{
+  "name": "robo-whatsapp-esmalteria",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "node --env-file=.env.local index.mjs",
+    "check": "node --check index.mjs",
+    "test": "node --experimental-test-module-mocks --test",
+    "test:rules": "node --test rules.test.mjs"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "@wppconnect-team/wppconnect": "2.4.6",
+    "firebase": "13.4.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "6.0.0"
+  }
+}

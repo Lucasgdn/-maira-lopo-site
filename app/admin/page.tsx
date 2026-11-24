@@ -15,6 +15,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import AppointmentsPanel, { type Appointment } from "./appointments-panel";
+import WhatsAppPanel from "./whatsapp-panel";
 import { firebaseAuth, firebaseConfigured, firestore } from "../lib/firebase";
 import HelpSupport from "../components/help-support";
 import { SITE_VERSION } from "../lib/site-config";
@@ -1065,6 +1066,7 @@ export default function AdminPage() {
               </button>
             </div>
 
+            <WhatsAppPanel />
             <AppointmentsPanel onAppointmentsChange={setAppointments} />
 
             <section className="mt-6 overflow-hidden rounded-2xl border border-[#e5d7cb] bg-white shadow-sm">

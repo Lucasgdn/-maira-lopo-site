@@ -48,3 +48,47 @@ Quando ha mais de uma profissional cadastrada, a cliente escolhe com quem deseja
 O pedido exige nome e celular/WhatsApp e aparece no painel como **Aguardando contato**. **Confirmar e avisar** atualiza o status e prepara uma mensagem de confirmacao no WhatsApp da cliente. **Cancelar e avisar** atualiza o status, remove os bloqueios de horario e prepara uma mensagem de cancelamento. Em reservas confirmadas, **Alterar data/horario** permite reagendar a cliente dentro da disponibilidade da profissional, sem conflito com outra reserva; ao salvar, abre uma mensagem pronta com a nova data e horario. **Enviar lembrete** prepara uma mensagem com servico, profissional, data e horario. As mensagens abrem para revisao e envio pela Maira; o site nao envia mensagens automaticamente nem cobra por esses links do WhatsApp. Se o navegador bloquear a abertura do WhatsApp durante uma mudanca de reserva, o painel oferece um link alternativo.
 
 `settings/availability` pode ser lido publicamente para exibir horarios, mas continua editavel apenas por administradoras. `appointments` guarda os dados pessoais da cliente e so pode ser lido por administradoras ativas. `bookingSlots` guarda apenas os intervalos ocupados, sem nome ou telefone, e e consultado para montar os horarios livres.
+
+As ideias para lembretes automaticos e resumos por profissional estao em [Plano da versao 3.0](./VERSAO-3.0.md). Elas ainda nao estao implementadas.
+
+## Conexao do robo ao painel
+
+Esta etapa apenas conecta ou desconecta o WhatsApp; nao envia mensagens nem
+consulta a agenda. A conexao e nao oficial e pode sofrer bloqueios.
+
+1. Publique as regras atualizadas de `firestore.rules` no Firebase Console.
+2. Em **Authentication > Users**, crie uma conta de e-mail e senha exclusiva
+   para o robo. Nao use a conta da administradora e nao envie a senha pelo chat.
+3. No Firestore, crie `botOperators/{UID}`, usando o UID dessa conta, com o
+   campo booleano `active` igual a `true`. Essa colecao so pode ser alterada
+   pelo console; nao adicione essa conta a `admins`.
+4. No computador ou servidor do robo, copie `robo-whatsapp/.env.example` para
+   `robo-whatsapp/.env.local`. Preencha `BOT_FIREBASE_API_KEY`,
+   `BOT_FIREBASE_PROJECT_ID` e `BOT_FIREBASE_AUTH_DOMAIN` com os valores
+   correspondentes da configuracao Web do Firebase; preencha `BOT_EMAIL` e
+   `BOT_PASSWORD` com a conta exclusiva do robo. Mantenha esse arquivo privado.
+5. Com Node.js 22.12 ou superior, execute `npm ci --omit=dev` e depois
+   `npm start` na pasta `robo-whatsapp`. Deixe o processo ligado e o relogio
+   do computador correto.
+6. Entre no painel como administradora. O QR aparece na secao **WhatsApp do
+   robo**; escaneie em **Dispositivos conectados**. Nao compartilhe o QR.
+   Apos conectar, **Desconectar** solicita ao robo a desvinculacao do aparelho.
+
+Se o robo estiver desligado ou sem comunicacao, o painel informa que esta
+offline e nao consegue executar a desvinculacao. Nesse caso, desconecte o
+dispositivo pelo proprio WhatsApp. Parar o processo nao desvincula o aparelho;
+a sessao local em `robo-whatsapp/.wppconnect` deve permanecer privada.
+O QR fica em um documento Firestore restrito a administradoras e ao robo e e
+apagado quando o estado muda. Se o processo cair inesperadamente, o ultimo QR
+pode permanecer no documento, mas o painel deixa de exibi-lo apos expirar.
+
+## Auditoria de dependencias
+
+Em novembro de 2026, `npm audit --omit=dev` apontou alertas no `@grpc/grpc-js`,
+dependencia transitiva do Firebase. Os avisos descrevem problemas ao executar
+servidores gRPC: [validacao de certificados](https://github.com/advisories/GHSA-m9gg-hp2v-232j)
+e [exposicao de erros](https://github.com/advisories/GHSA-f596-whhp-79r4).
+O codigo do site usa o SDK Firebase como cliente e nao foi encontrado servidor
+gRPC proprio. Isso nao elimina o alerta da auditoria; acompanhe atualizacoes
+compativeis do Firebase e reavalie a exposicao ao mudar a arquitetura. Nao
+force uma versao diferente do gRPC sem validar a compatibilidade.
