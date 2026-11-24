@@ -41,7 +41,7 @@ const help: Record<HelpSection, { title: string; tips: string[] }> = {
   profissionais: {
     title: "Profissionais e horários",
     tips: [
-      "Adicione ou remova profissionais e ajuste os dias, horários e intervalos de cada uma.",
+      "Toque no nome da profissional para abrir ou recolher as configurações. Você também pode adicionar ou remover profissionais.",
       "Toque em um dia para editar seus horários. Abra Atalhos semanais para aplicar mudanças à equipe.",
       "Clique em Salvar disponibilidade para que as alterações entrem em vigor.",
     ],

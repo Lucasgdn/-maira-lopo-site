@@ -1,5 +1,27 @@
 import assert from "node:assert/strict";
 import { mock, test } from "node:test";
+import { disconnectWhatsApp } from "./disconnect.mjs";
+
+test("confirms logout after navigation only when the pairing screen appears", async () => {
+  const navigationError = new Error("Execution context was destroyed, most likely because of a navigation.");
+  let observed = false;
+  await disconnectWhatsApp({
+    logout: async () => { throw navigationError; },
+    waPage: { waitForFunction: async (_check, options) => {
+      assert.equal(options.timeout, 90000);
+      observed = true;
+    } },
+  });
+  assert.equal(observed, true);
+
+  await assert.rejects(disconnectWhatsApp({
+    logout: async () => { throw navigationError; },
+    waPage: { waitForFunction: async () => { throw new Error("timeout"); } },
+  }), /nao confirmou a desconexao/);
+  await assert.rejects(disconnectWhatsApp({
+    logout: async () => { throw new Error("outra falha"); },
+  }), /outra falha/);
+});
 
 test("publishes the QR and disconnects only the current session", async () => {
   const previous = {};

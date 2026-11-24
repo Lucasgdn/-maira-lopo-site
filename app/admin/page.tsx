@@ -310,6 +310,7 @@ export default function AdminPage() {
   const [calendarProfessionalFilter, setCalendarProfessionalFilter] = useState("");
   const [dateOverrideLabel, setDateOverrideLabel] = useState("");
   const [bulkMondayEndTime, setBulkMondayEndTime] = useState("12:00");
+  const [expandedProfessionals, setExpandedProfessionals] = useState<string[]>([]);
   const [expandedScheduleDays, setExpandedScheduleDays] = useState<string[]>([]);
   const [todayDate, setTodayDate] = useState(() => {
     const today = new Date();
@@ -472,10 +473,12 @@ export default function AdminPage() {
   }
 
   function addProfessional() {
+    const id = crypto.randomUUID();
+    setExpandedProfessionals((current) => [...current, id]);
     setProfessionals((current) => [
       ...current,
       {
-        id: crypto.randomUUID(),
+        id,
         name: "",
         days: [1, 2, 3, 4, 5],
         startTime: "09:00",
@@ -597,6 +600,7 @@ export default function AdminPage() {
 
     const invalidName = professionals.find((professional) => !professional.name.trim());
     if (invalidName) {
+      setExpandedProfessionals((current) => [...new Set([...current, invalidName.id])]);
       setMessage("Informe o nome de cada profissional.");
       setIsError(true);
       return;
@@ -617,11 +621,12 @@ export default function AdminPage() {
               schedule.breakStart < schedule.startTime ||
               schedule.breakEnd > schedule.endTime))
         );
-        return invalid ? [{ key: `${professional.id}:${dayIndex}`, day, name: professional.name }] : [];
+        return invalid ? [{ key: `${professional.id}:${dayIndex}`, professionalId: professional.id, day, name: professional.name }] : [];
       }),
     );
 
     if (invalidDays.length > 0) {
+      setExpandedProfessionals((current) => [...new Set([...current, ...invalidDays.map((day) => day.professionalId)])]);
       setExpandedScheduleDays((current) => [...new Set([...current, ...invalidDays.map((day) => day.key)])]);
       setMessage(`Revise os horários e intervalos de ${invalidDays[0].name} em ${invalidDays[0].day}.`);
       setIsError(true);
@@ -2080,13 +2085,27 @@ export default function AdminPage() {
               ) : (
                 <div className="space-y-6">
                   {professionals.map((professional, index) => (
-                    <fieldset
-                      className="min-w-0 rounded-xl border border-[#e8ddd4] p-4 sm:p-5"
+                    <details
+                      className="group/professional min-w-0 rounded-xl border border-[#e8ddd4]"
                       key={professional.id}
+                      onToggle={(event) => {
+                        if (event.target !== event.currentTarget) return;
+                        const isOpen = event.currentTarget.open;
+                        setExpandedProfessionals((current) =>
+                          isOpen
+                            ? [...new Set([...current, professional.id])]
+                            : current.filter((id) => id !== professional.id),
+                        );
+                      }}
+                      open={expandedProfessionals.includes(professional.id)}
                     >
-                      <legend className="px-2 font-semibold">
-                        {professional.name.trim() || `Profissional ${index + 1}`}
-                      </legend>
+                      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7a6a5a] [&::-webkit-details-marker]:hidden">
+                        <span className="min-w-0 flex-1 break-words font-semibold text-[#493a33]">
+                          {professional.name.trim() || `Profissional ${index + 1}`}
+                        </span>
+                        <span aria-hidden="true" className="text-xl text-[#8a7b6e] transition group-open/professional:rotate-180">⌄</span>
+                      </summary>
+                      <div className="border-t border-[#e8ddd4] p-4 sm:p-5">
                       <label className="block text-sm font-medium">
                         Nome
                         <input
@@ -2094,7 +2113,6 @@ export default function AdminPage() {
                           onChange={(event) =>
                             updateProfessional(professional.id, { name: event.target.value })
                           }
-                          required
                           value={professional.name}
                         />
                       </label>
@@ -2110,6 +2128,7 @@ export default function AdminPage() {
                               className="group rounded-xl border border-[#eee4dc] bg-[#fffdfb]"
                               key={day}
                               onToggle={(event) => {
+                                if (event.target !== event.currentTarget) return;
                                 const isOpen = event.currentTarget.open;
                                 setExpandedScheduleDays((current) =>
                                   isOpen
@@ -2215,7 +2234,8 @@ export default function AdminPage() {
                       >
                         Remover profissional
                       </button>
-                    </fieldset>
+                      </div>
+                    </details>
                   ))}
                 </div>
               )}

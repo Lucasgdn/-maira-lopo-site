@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { deleteApp, initializeApp } from "firebase/app";
+import { disconnectWhatsApp } from "./disconnect.mjs";
 import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import {
   doc,
@@ -85,9 +86,23 @@ async function main() {
     try {
       if (logout) {
         await publish({ status: "disconnecting", qr: null, qrAt: null });
-        if (!client || !(await client.logout())) {
+        if (!client) {
           throw new Error("O WhatsApp nao confirmou a desconexao.");
         }
+        let refreshError;
+        const disconnectHeartbeat = setInterval(() => {
+          void publish({}).catch((error) => {
+            refreshError = error;
+            console.error("Falha ao atualizar o estado da desconexao:", error.message);
+          });
+        }, 15000);
+        try {
+          await disconnectWhatsApp(client);
+        } finally {
+          clearInterval(disconnectHeartbeat);
+        }
+        await queue;
+        if (refreshError) throw refreshError;
       }
       if (client) {
         await client.close();

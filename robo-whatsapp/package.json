@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@wppconnect-team/wppconnect": "2.4.6",
-    "firebase": "13.4.0"
+    "firebase": "13.4.0",
+    "puppeteer": "25.18.1"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "6.0.0"

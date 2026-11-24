@@ -49,7 +49,8 @@ O painel salva disponibilidade semanal, excecoes de datas e eventos manuais em `
 
 No painel, os controles **Hoje**, **Semana anterior** e **Proxima semana** permitem navegar pela agenda. Em telas pequenas, o intervalo de datas fica compacto e os botoes de navegacao permanecem visiveis.
 
-Na configuracao da rotina semanal, cada dia mostra um resumo; toque nele para
+Na configuracao da rotina semanal, toque no nome da profissional para abrir
+ou recolher suas configuracoes. Cada dia mostra um resumo; toque nele para
 editar os horarios. Os atalhos semanais ficam recolhidos e o botao para salvar
 acompanha a tela no celular. As alteracoes so entram em vigor depois de salvar.
 Os campos ficam empilhados no celular e passam para duas colunas em telas maiores.
