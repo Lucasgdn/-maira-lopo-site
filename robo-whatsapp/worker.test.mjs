@@ -60,8 +60,19 @@ test(`publishes the QR and disconnects only the current session (${mode})`, asyn
   } });
   mock.module("firebase/firestore", { exports: {
     getFirestore: () => ({}),
+    collection: () => ({}),
     doc: (_db, collection) => collection,
-    onSnapshot: (_ref, callback) => { onCommand = callback; return () => {}; },
+    getDocFromServer: async () => ({ exists: () => false }),
+    getDocs: async () => ({ docs: [] }),
+    getDocsFromServer: async () => ({ docs: [] }),
+    updateDoc: async () => {},
+    onSnapshot: (ref, options, callback) => {
+      if (ref === "botCommands") onCommand = options;
+      else if (callback) callback({ metadata: { fromCache: false }, docs: [] });
+      return () => {};
+    },
+    query: () => ({}),
+    where: () => ({}),
     serverTimestamp: () => fakeTime,
     Timestamp: { now: () => fakeTime },
     runTransaction: async (_db, callback) => callback({

@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import {
@@ -6,7 +7,7 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
 
 test("QR and disconnect commands are restricted to their intended accounts", {
   skip: !process.env.FIRESTORE_EMULATOR_HOST,
@@ -51,8 +52,48 @@ test("QR and disconnect commands are restricted to their intended accounts", {
     await assertFails(getDoc(doc(anonymous, "botSessions", "whatsapp")));
     await assertFails(getDoc(doc(inactiveAdmin, "botSessions", "whatsapp")));
     await assertFails(setDoc(doc(inactiveBot, "botSessions", "whatsapp"), session));
-    await assertFails(getDoc(doc(bot, "appointments", "private")));
+    await assertSucceeds(getDoc(doc(bot, "appointments", "private")));
     await assertFails(getDoc(doc(bot, "settings", "private")));
+    const reminderSettings = doc(admin, "settings", "reminders");
+    await assertSucceeds(setDoc(reminderSettings, { recipientPhone: "5511999999999" }));
+    await assertSucceeds(getDoc(reminderSettings));
+    await assertFails(getDoc(doc(anonymous, "settings", "reminders")));
+    await assertFails(getDoc(doc(stranger, "settings", "reminders")));
+    await assertSucceeds(getDoc(doc(bot, "settings", "reminders")));
+    await assertFails(setDoc(doc(stranger, "settings", "reminders"), { recipientPhone: "" }));
+    async function createBooking(id, extraField) {
+      const batch = writeBatch(anonymous);
+      const slotId = `professional_2030-01-01_${id}`;
+      const appointment = {
+        customerName: "Cliente Teste",
+        customerPhone: "5511999999999",
+        service: "Servico",
+        price: "R$ 10",
+        durationMinutes: 5,
+        professionalId: "professional",
+        professionalName: "Profissional",
+        date: "2030-01-01",
+        startTime: id,
+        endTime: id === "09:00" ? "09:05" : id === "10:00" ? "10:05" : "11:05",
+        slotIds: [slotId],
+        status: "pending",
+        createdAt: serverTimestamp(),
+      };
+      if (extraField !== undefined) appointment.remindersDisabled = extraField;
+      batch.set(doc(anonymous, "appointments", id), appointment);
+      batch.set(doc(anonymous, "bookingSlots", slotId), {
+        appointmentId: id,
+        professionalId: "professional",
+        date: "2030-01-01",
+        time: id,
+      });
+      return batch.commit();
+    }
+    await assertSucceeds(createBooking("09:00", undefined));
+    await assertSucceeds(createBooking("10:00", undefined));
+    await assertFails(createBooking("11:00", "sim"));
+    await assertSucceeds(setDoc(doc(admin, "appointments", "10:00"), { remindersDisabled: true }, { merge: true }));
+    assert.equal((await getDoc(doc(admin, "appointments", "10:00"))).data().remindersDisabled, true);
     await assertFails(setDoc(doc(bot, "botCommands", "whatsapp"), command));
     await assertFails(setDoc(doc(stranger, "botCommands", "whatsapp"), command));
     await assertFails(setDoc(doc(admin, "botCommands", "whatsapp"), { ...command, runId: "invalid" }));

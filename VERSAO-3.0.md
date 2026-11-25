@@ -3,14 +3,20 @@
 ## Situacao atual
 
 Este documento registra ideias e proximas etapas; a versao 3.0 ainda nao esta
-concluida. A primeira etapa prepara o pareamento do WhatsApp no terminal do
-servidor, sem integrar a agenda nem enviar mensagens. Atualmente a agenda usa
-Firebase e identifica a profissional de cada reserva. No painel, o lembrete
-abre uma mensagem pronta para a Maira revisar e enviar; nao ha envio automatico.
-O pareamento real ainda nao foi validado. A primeira biblioteca de conexao
+concluida. O projeto local inclui configuracao e processamento de lembretes,
+resumos e avisos de pedidos, ainda pendentes de validacao real pela proprietaria.
+Atualmente a agenda usa Firebase e identifica a profissional de cada reserva.
+O atalho manual de lembrete continua disponivel no painel.
+O pareamento real ja foi validado pelo usuario. A primeira biblioteca de conexao
 foi substituida pela alternativa WPPConnect. O robo tambem usa Firebase para
 se comunicar com o painel; a auditoria ainda aponta alertas transitivos do
-Firebase. Nao usar em producao antes de validar a conexao e a operacao.
+Firebase. Nao ativar envios em producao antes de validar a operacao.
+
+O painel permite escolher o numero particular, horarios e periodos dos
+resumos, pendentes do dia e antecedencias em horas ou dias. Cada tipo de envio
+comeca desligado. O robo usa horario de Brasilia e, ao voltar de uma
+interrupcao, tenta mensagens ainda relevantes. Envios com resultado incerto
+nao sao repetidos automaticamente e exigem conferencia no painel.
 
 ## Objetivo
 
@@ -28,8 +34,8 @@ O robo sera um processo separado do site, executado em um servidor.
 - Registrar a situacao de cada envio e evitar duplicacoes, inclusive apos
   reinicios e reagendamentos. Em caso de resultado incerto, nao presumir que
   a mensagem foi entregue nem repetir cegamente.
-- Definir como informar as clientes sobre os lembretes e respeitar sua
-  preferencia de recebimento.
+- O formulario informa que o salao pode enviar lembretes pelo WhatsApp.
+  A administradora pode desativa-los para uma reserva no painel.
 
 ## Resumo diario
 
@@ -87,26 +93,24 @@ armazenamento persistente; ela nao deve ser compartilhada ou adicionada ao Git.
 
 1. Preparar o processo separado e o pareamento por QR no painel,
    sem enviar mensagens nem consultar a agenda.
-2. Definir as regras de lembrete e de resumo, destinatario e preferencias das
-   clientes; preparar no painel uma configuracao privada, sem ativar envios.
-3. Integrar o robo a agenda, ao painel e ao registro de estado e envios.
-4. Validar com dados simulados, incluindo cancelamentos, reagendamentos,
-   desconexoes e resultados de envio incertos.
-5. Configurar a hospedagem e permitir que a proprietaria faca a validacao real
-   antes de ativar os envios.
+2. Publicar as regras atualizadas e instalar o codigo novo no servidor do robo.
+3. Permitir que a proprietaria faca a validacao real antes de ativar os envios.
+4. Configurar a hospedagem continua.
 
 ## Decisoes em aberto
 
-- Antecedencia, horario e texto dos lembretes para clientes.
-- Horario, texto e comportamento do resumo quando nao houver atendimentos.
 - Se e como avisar alteracoes feitas depois do resumo.
-- Como tratar mensagens vencidas durante uma queda ou ausencia de conexao.
-- Regras de preferencia das clientes, autorizacao dos destinatarios e retencao
-  dos registros.
-- Detalhes da hospedagem temporaria e validacao real do QR e da desconexao.
+- Politica de retencao dos registros de envio.
+- Detalhes da hospedagem temporaria e validacao real da desconexao.
 
 ## Melhorias futuras
 
+- Estudar controle financeiro e de comissoes: registrar pagamentos e despesas,
+  acompanhar totais por periodo e valores pendentes, e calcular comissoes por
+  profissional e servico. Definir regras para valores fixos ou percentuais,
+  momento em que a comissao e devida, cancelamentos e descontos, alem de
+  restringir o acesso aos dados financeiros. A versao e o escopo ainda nao
+  foram definidos.
 - Contas individuais para profissionais configurarem seu proprio numero.
 - Possibilidade de oferecer planos mensais com funcionalidades diferentes,
   como um destinatario para a loja ou destinatarios individuais. Cobranca,

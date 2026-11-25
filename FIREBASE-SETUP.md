@@ -59,16 +59,34 @@ Os botoes **Agendar** dos cards abrem o calendario publico. Cada card informa a 
 
 Quando ha mais de uma profissional cadastrada, a cliente escolhe com quem deseja agendar antes de consultar as datas e horarios. A disponibilidade exibida e os bloqueios de reserva sao daquela profissional. O painel combina as reservas na agenda semanal, identifica o nome da profissional e permite filtrar a visualizacao por pessoa. Reservas simultaneas aparecem lado a lado na agenda semanal.
 
-O pedido exige nome e celular/WhatsApp e aparece no painel como **Aguardando contato**. **Confirmar e avisar** atualiza o status e prepara uma mensagem de confirmacao no WhatsApp da cliente. **Cancelar e avisar** atualiza o status, remove os bloqueios de horario e prepara uma mensagem de cancelamento. Em reservas confirmadas, **Alterar data/horario** permite reagendar a cliente dentro da disponibilidade da profissional, sem conflito com outra reserva; ao salvar, abre uma mensagem pronta com a nova data e horario. **Enviar lembrete** prepara uma mensagem com servico, profissional, data e horario. As mensagens abrem para revisao e envio pela Maira; o site nao envia mensagens automaticamente nem cobra por esses links do WhatsApp. Se o navegador bloquear a abertura do WhatsApp durante uma mudanca de reserva, o painel oferece um link alternativo.
+O pedido exige nome e celular/WhatsApp e aparece no painel como **Aguardando contato**. **Confirmar e avisar** atualiza o status e prepara uma mensagem de confirmacao no WhatsApp da cliente. **Cancelar e avisar** atualiza o status, remove os bloqueios de horario e prepara uma mensagem de cancelamento. Em reservas confirmadas, **Alterar data/horario** permite reagendar a cliente dentro da disponibilidade da profissional, sem conflito com outra reserva; ao salvar, abre uma mensagem pronta com a nova data e horario. **Enviar lembrete** prepara uma mensagem com servico, profissional, data e horario. Essas mensagens abrem para revisao e envio manual; sao independentes dos envios automaticos do robo.
 
-`settings/availability` pode ser lido publicamente para exibir horarios, mas continua editavel apenas por administradoras. `appointments` guarda os dados pessoais da cliente e so pode ser lido por administradoras ativas. `bookingSlots` guarda apenas os intervalos ocupados, sem nome ou telefone, e e consultado para montar os horarios livres.
+`settings/availability` pode ser lido publicamente para exibir horarios, mas continua editavel apenas por administradoras. `appointments` guarda dados pessoais e pode ser lido apenas por administradoras ativas e pela conta restrita do robo. `bookingSlots` guarda apenas os intervalos ocupados, sem nome ou telefone, e e consultado para montar os horarios livres.
 
-As ideias para lembretes automaticos e resumos por profissional estao em [Plano da versao 3.0](./VERSAO-3.0.md). Elas ainda nao estao implementadas.
+Na secao **WhatsApp**, a administradora pode guardar seu numero particular,
+adicionar horarios de resumo para periodos escolhidos da agenda de hoje ou
+amanha e configurar lembretes para clientes em horas ou dias de antecedencia.
+Para dias, pode escolher intervalos de 24 horas ou um horario nos dias anteriores.
+Cada tipo de envio pode ser ativado separadamente; todos comecam desligados.
+Os dados ficam em `settings/reminders`, com acesso a administradoras ativas e
+leitura pela conta restrita do robo. O salao usa o horario de Brasilia. Ao voltar
+de uma interrupcao, o robo tenta mensagens atrasadas que ainda sejam relevantes,
+mas nao envia lembretes de atendimentos ja iniciados.
+
+O formulario informa que o salao pode enviar lembretes pelo WhatsApp, sem exigir
+uma selecao da cliente. A administradora pode desativar os lembretes de uma
+reserva no painel. Publique as regras atualizadas antes de ativar o robo.
+
+Os envios usam registros em `botDeliveries` para evitar repeticoes. Quando o
+resultado for incerto, o painel avisa e nao repete automaticamente. A
+administradora deve conferir a conversa no WhatsApp antes de marcar como
+conferido ou enviar outra mensagem. O envio pela integracao nao garante entrega.
 
 ## Conexao do robo ao painel
 
-Esta etapa apenas conecta ou desconecta o WhatsApp; nao envia mensagens nem
-consulta a agenda. A conexao e nao oficial e pode sofrer bloqueios.
+O robo consulta a agenda e envia somente os tipos ativados no painel. Esta
+versao precisa de validacao real pela proprietaria antes de ser usada em
+producao. A conexao e nao oficial e pode sofrer bloqueios.
 
 1. Publique as regras atualizadas de `firestore.rules` no Firebase Console.
 2. Em **Authentication > Users**, crie uma conta de e-mail e senha exclusiva
@@ -87,6 +105,10 @@ consulta a agenda. A conexao e nao oficial e pode sofrer bloqueios.
 6. Entre no painel como administradora. O QR aparece na secao **WhatsApp do
    robo**; escaneie em **Dispositivos conectados**. Nao compartilhe o QR.
    Apos conectar, **Desconectar** solicita ao robo a desvinculacao do aparelho.
+7. Configure o numero particular, os textos e os horarios desejados. Marque
+   apenas os tipos de envio que pretende usar e salve. O codigo novo do robo
+   precisa ser instalado no servidor e o processo reiniciado; publicar apenas
+   o site nao atualiza o processo separado.
 
 Se o robo estiver desligado ou sem comunicacao, o painel informa que esta
 offline e nao consegue executar a desvinculacao. Nesse caso, desconecte o

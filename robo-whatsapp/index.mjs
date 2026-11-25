@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { deleteApp, initializeApp } from "firebase/app";
 import { disconnectWhatsApp } from "./disconnect.mjs";
+import { createReminderWorker } from "./reminders.mjs";
 import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import {
   doc,
@@ -41,11 +42,12 @@ async function main() {
   const sessionRef = doc(db, "botSessions", "whatsapp");
   const commandRef = doc(db, "botCommands", "whatsapp");
   const runId = randomUUID();
-  let state = { runId, status: "starting", qr: null, qrAt: null };
+  let state = { runId, status: "starting", qr: null, qrAt: null, deliveryError: null };
   let client;
   let stopping = false;
   let connected = false;
   let heartbeat;
+  let reminders;
   let heartbeatRunning = false;
   let unsubscribe;
   let confirmLogoutQr;
@@ -87,12 +89,6 @@ async function main() {
     try {
       if (logout) {
         await publish({ status: "disconnecting", qr: null, qrAt: null });
-        if (!client) {
-          throw new Error("O WhatsApp nao confirmou a desconexao.");
-        }
-        const pairingScreen = new Promise((resolve) => {
-          confirmLogoutQr = resolve;
-        });
         let refreshError;
         const disconnectHeartbeat = setInterval(() => {
           void publish({}).catch((error) => {
@@ -101,6 +97,13 @@ async function main() {
           });
         }, 15000);
         try {
+          await reminders?.stop();
+          if (!client) {
+            throw new Error("O WhatsApp nao confirmou a desconexao.");
+          }
+          const pairingScreen = new Promise((resolve) => {
+            confirmLogoutQr = resolve;
+          });
           await disconnectWhatsApp(client, pairingScreen);
         } finally {
           clearInterval(disconnectHeartbeat);
@@ -108,6 +111,8 @@ async function main() {
         }
         await queue;
         if (refreshError) throw refreshError;
+      } else {
+        await reminders?.stop();
       }
       if (client) {
         await client.close();
@@ -221,7 +226,14 @@ async function main() {
         void stop("error");
       }
     });
-    console.log("WhatsApp conectado. Nenhuma mensagem automatica esta habilitada.");
+    reminders = createReminderWorker({
+      db, client, isRunning: () => connected && !stopping,
+      onStatus: async (deliveryError) => {
+        if (!stopping && state.deliveryError !== deliveryError) await publish({ deliveryError });
+      },
+    });
+    reminders.start();
+    console.log("WhatsApp conectado. Envios dependem das configuracoes do painel.");
     process.once("SIGINT", () => void stop("offline"));
     process.once("SIGTERM", () => void stop("offline"));
   } catch (error) {

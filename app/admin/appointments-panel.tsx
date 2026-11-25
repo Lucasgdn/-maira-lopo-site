@@ -14,6 +14,7 @@ export type Appointment = {
   id: string;
   customerName: string;
   customerPhone: string;
+  remindersDisabled?: boolean;
   service: string;
   price: string;
   durationMinutes: number;
@@ -74,6 +75,7 @@ function isAppointment(value: unknown): value is Omit<Appointment, "id"> {
     typeof value.customerName === "string" &&
     "customerPhone" in value &&
     typeof value.customerPhone === "string" &&
+    (!("remindersDisabled" in value) || typeof value.remindersDisabled === "boolean") &&
     "service" in value &&
     typeof value.service === "string" &&
     "price" in value &&
@@ -306,6 +308,22 @@ export default function AppointmentsPanel({ onAppointmentsChange, onLoadStateCha
       },
     );
   }, [onAppointmentsChange, onLoadStateChange]);
+
+  async function toggleReminders(appointment: Appointment) {
+    const db = firestore;
+    if (!db) return;
+    const enable = appointment.remindersDisabled === true;
+    if (!window.confirm(enable ? "Reativar lembretes automáticos desta reserva?" : "Desativar lembretes automáticos desta reserva?")) return;
+    setSavingId(appointment.id);
+    setErrorMessage("");
+    try {
+      await updateDoc(doc(db, "appointments", appointment.id), { remindersDisabled: !enable });
+    } catch {
+      setErrorMessage("Não foi possível atualizar os lembretes. Verifique a conexão e tente novamente.");
+    } finally {
+      setSavingId("");
+    }
+  }
 
   async function updateStatus(
     appointment: Appointment,
@@ -629,6 +647,9 @@ export default function AppointmentsPanel({ onAppointmentsChange, onLoadStateCha
                   <p className="mt-1 text-sm text-[#6b625b]">
                     WhatsApp: +{appointment.customerPhone}
                   </p>
+                  <p className="mt-1 text-xs text-[#6b625b]">
+                    Lembretes automáticos: {appointment.remindersDisabled === true ? "desativados para esta reserva" : "disponíveis para esta reserva"}
+                  </p>
                   <p className="mt-1 text-sm font-medium text-[#5c4a3f]">
                     {formatDate(appointment.date)} · {appointment.startTime}–{appointment.endTime}
                   </p>
@@ -640,6 +661,14 @@ export default function AppointmentsPanel({ onAppointmentsChange, onLoadStateCha
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                    <button
+                      className="min-h-10 rounded-lg border border-[#7a6a5a] px-3 text-sm font-medium hover:bg-white disabled:opacity-60"
+                      disabled={savingId === appointment.id}
+                      onClick={() => void toggleReminders(appointment)}
+                      type="button"
+                    >
+                      {appointment.remindersDisabled === true ? "Reativar lembretes" : "Desativar lembretes"}
+                    </button>
                   <a
                     className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#218c52] px-3 text-sm font-semibold text-white hover:bg-[#176d3e]"
                     href={getWhatsAppUrl(appointment)}

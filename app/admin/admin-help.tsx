@@ -52,7 +52,9 @@ const help: Record<HelpSection, { title: string; tips: string[] }> = {
       "O robô precisa estar configurado e ligado no computador ou servidor para gerar o QR code.",
       "Quando o QR aparecer, abra Dispositivos conectados no WhatsApp e escaneie. Não compartilhe o código.",
       "Após conectar, use Desconectar para desvincular. Com o robô offline, faça isso em Dispositivos conectados no WhatsApp.",
-      "A conexão não é oficial e pode sofrer bloqueios. Lembretes automáticos ainda não estão ativos.",
+      "Configure seu número particular, os horários e períodos dos resumos e a antecedência dos lembretes das clientes. Salve as alterações.",
+      "Ative somente os tipos de envio desejados e salve. O robô precisa estar ligado; a conexão não é oficial e pode sofrer bloqueios.",
+      "Se um envio ficar com resultado incerto, confira a conversa no WhatsApp antes de marcá-lo como conferido ou enviar outra mensagem.",
     ],
   },
 };

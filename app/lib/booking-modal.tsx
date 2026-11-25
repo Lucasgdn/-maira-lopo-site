@@ -818,6 +818,9 @@ export default function BookingModal({ service, onClose }: Props) {
                       value={customerPhone}
                     />
                   </label>
+                  <p className="text-sm text-[#6b625b]">
+                    O salão poderá enviar lembretes deste agendamento pelo WhatsApp.
+                  </p>
                   {errorMessage && (
                     <p className="text-sm text-red-700" role="alert">
                       {errorMessage}

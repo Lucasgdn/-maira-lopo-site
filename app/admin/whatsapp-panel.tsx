@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { doc, onSnapshot, runTransaction, serverTimestamp, Timestamp } from "firebase/firestore";
 import { firestore } from "../lib/firebase";
+import ReminderSettingsPanel from "./reminder-settings-panel";
+import ReminderDeliveries from "./reminder-deliveries";
 
 type Session = {
   runId: string;
@@ -11,6 +13,7 @@ type Session = {
   qr: string | null;
   qrAt: Timestamp | null;
   updatedAt: Timestamp;
+  deliveryError?: string | null;
 };
 
 function isSession(value: unknown): value is Session {
@@ -24,6 +27,7 @@ function isSession(value: unknown): value is Session {
     (data.qr === null || (typeof data.qr === "string" &&
       data.qr.length <= 150000 && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(data.qr))) &&
     (data.qrAt === null || data.qrAt instanceof Timestamp) &&
+    (data.deliveryError === undefined || data.deliveryError === null || typeof data.deliveryError === "string") &&
     data.updatedAt instanceof Timestamp
   );
 }
@@ -146,6 +150,7 @@ export default function WhatsAppPanel({ compact = false, onOpen }: Props) {
   }
 
   return (
+    <>
     <section className="mt-6 rounded-xl border border-[#e8ddd4] p-4 sm:p-5">
       <h3 className="font-semibold text-[#5c4a3f]">WhatsApp do robo</h3>
       <p className="mt-2 text-sm text-[#6b625b]">
@@ -177,6 +182,10 @@ export default function WhatsAppPanel({ compact = false, onOpen }: Props) {
         </p>
       )}
       {message && <p className="mt-3 text-sm" role="status">{message}</p>}
+      {session?.deliveryError && <p className="mt-3 text-sm text-red-700" role="alert">{session.deliveryError}</p>}
     </section>
+    <ReminderDeliveries />
+    <ReminderSettingsPanel />
+    </>
   );
 }
