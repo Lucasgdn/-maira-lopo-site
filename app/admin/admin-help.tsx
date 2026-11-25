@@ -34,8 +34,8 @@ const help: Record<HelpSection, { title: string; tips: string[] }> = {
     title: "Reservas",
     tips: [
       "Confira os pedidos recebidos e use as opções de cada reserva para confirmar, cancelar ou alterar o horário.",
-      "Ao confirmar, cancelar ou alterar um horário, uma mensagem é preparada no WhatsApp para você revisar e enviar.",
-      "O botão de lembrete também prepara uma mensagem; o envio não é automático.",
+      "Ao confirmar ou cancelar, o robô pode avisar automaticamente se a opção estiver ativada e ele estiver conectado; caso contrário, você pode avisar pelo WhatsApp.",
+      "Ao alterar um horário ou usar o botão de lembrete, uma mensagem é preparada para envio manual. Os lembretes automáticos são configurados separadamente.",
     ],
   },
   profissionais: {
@@ -54,6 +54,7 @@ const help: Record<HelpSection, { title: string; tips: string[] }> = {
       "Após conectar, use Desconectar para desvincular. Com o robô offline, faça isso em Dispositivos conectados no WhatsApp.",
       "Configure seu número particular, os horários e períodos dos resumos e a antecedência dos lembretes das clientes. Salve as alterações.",
       "Ative somente os tipos de envio desejados e salve. O robô precisa estar ligado; a conexão não é oficial e pode sofrer bloqueios.",
+      "Os avisos de confirmação e cancelamento começam desligados. Ative-os nesta tela se quiser que o robô os envie.",
       "Se um envio ficar com resultado incerto, confira a conversa no WhatsApp antes de marcá-lo como conferido ou enviar outra mensagem.",
     ],
   },

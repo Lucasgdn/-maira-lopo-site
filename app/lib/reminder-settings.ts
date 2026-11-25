@@ -25,6 +25,7 @@ export type ReminderSettings = {
     newBookings: boolean;
     summaries: boolean;
     customers: boolean;
+    statusNotices?: boolean;
     newText: string;
     summaryText: string;
     customerText: string;
@@ -42,6 +43,7 @@ function isAutomation(value: unknown): value is NonNullable<ReminderSettings["au
     "newBookings" in value && typeof value.newBookings === "boolean" &&
     "summaries" in value && typeof value.summaries === "boolean" &&
     "customers" in value && typeof value.customers === "boolean" &&
+    (!("statusNotices" in value) || typeof value.statusNotices === "boolean") &&
     "newText" in value && typeof value.newText === "string" &&
     "summaryText" in value && typeof value.summaryText === "string" &&
     "customerText" in value && typeof value.customerText === "string";
@@ -65,6 +67,7 @@ export function validateReminderSettings(settings: ReminderSettings): string | n
         typeof automation.newBookings !== "boolean" ||
         typeof automation.summaries !== "boolean" ||
         typeof automation.customers !== "boolean" ||
+        (automation.statusNotices !== undefined && typeof automation.statusNotices !== "boolean") ||
         typeof automation.newText !== "string" ||
         typeof automation.summaryText !== "string" ||
         typeof automation.customerText !== "string") {

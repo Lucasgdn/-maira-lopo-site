@@ -18,6 +18,10 @@ comeca desligado. O robo usa horario de Brasilia e, ao voltar de uma
 interrupcao, tenta mensagens ainda relevantes. Envios com resultado incerto
 nao sao repetidos automaticamente e exigem conferencia no painel.
 
+Uma opcao independente permite avisos automaticos de confirmacao e cancelamento.
+Quando nao houver robo compativel conectado, o painel mantem o envio manual.
+O botao de lembrete manual e as configuracoes de lembretes continuam independentes.
+
 ## Objetivo
 
 Criar um robo integrado a agenda para enviar lembretes de agendamentos e

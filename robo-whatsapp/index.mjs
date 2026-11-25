@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { deleteApp, initializeApp } from "firebase/app";
 import { disconnectWhatsApp } from "./disconnect.mjs";
 import { createReminderWorker } from "./reminders.mjs";
+import { createStatusNoticeWorker } from "./status-notices.mjs";
 import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import {
   doc,
@@ -48,6 +49,7 @@ async function main() {
   let connected = false;
   let heartbeat;
   let reminders;
+  let statusNotices;
   let heartbeatRunning = false;
   let unsubscribe;
   let confirmLogoutQr;
@@ -98,6 +100,7 @@ async function main() {
         }, 15000);
         try {
           await reminders?.stop();
+          await statusNotices?.stop();
           if (!client) {
             throw new Error("O WhatsApp nao confirmou a desconexao.");
           }
@@ -113,6 +116,7 @@ async function main() {
         if (refreshError) throw refreshError;
       } else {
         await reminders?.stop();
+        await statusNotices?.stop();
       }
       if (client) {
         await client.close();
@@ -233,6 +237,9 @@ async function main() {
       },
     });
     reminders.start();
+    statusNotices = createStatusNoticeWorker({ db, client, isRunning: () => connected && !stopping });
+    statusNotices.start();
+    await publish({ statusNotices: 1 });
     console.log("WhatsApp conectado. Envios dependem das configuracoes do painel.");
     process.once("SIGINT", () => void stop("offline"));
     process.once("SIGTERM", () => void stop("offline"));

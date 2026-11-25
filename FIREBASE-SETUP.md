@@ -59,7 +59,7 @@ Os botoes **Agendar** dos cards abrem o calendario publico. Cada card informa a 
 
 Quando ha mais de uma profissional cadastrada, a cliente escolhe com quem deseja agendar antes de consultar as datas e horarios. A disponibilidade exibida e os bloqueios de reserva sao daquela profissional. O painel combina as reservas na agenda semanal, identifica o nome da profissional e permite filtrar a visualizacao por pessoa. Reservas simultaneas aparecem lado a lado na agenda semanal.
 
-O pedido exige nome e celular/WhatsApp e aparece no painel como **Aguardando contato**. **Confirmar e avisar** atualiza o status e prepara uma mensagem de confirmacao no WhatsApp da cliente. **Cancelar e avisar** atualiza o status, remove os bloqueios de horario e prepara uma mensagem de cancelamento. Em reservas confirmadas, **Alterar data/horario** permite reagendar a cliente dentro da disponibilidade da profissional, sem conflito com outra reserva; ao salvar, abre uma mensagem pronta com a nova data e horario. **Enviar lembrete** prepara uma mensagem com servico, profissional, data e horario. Essas mensagens abrem para revisao e envio manual; sao independentes dos envios automaticos do robo.
+O pedido exige nome e celular/WhatsApp e aparece no painel como **Aguardando contato**. **Confirmar e avisar** atualiza o status e **Cancelar e avisar** tambem remove os bloqueios de horario. Por padrao, essas acoes preparam mensagens para envio manual. Na secao WhatsApp, uma unica opcao permite que o robo envie confirmacoes e cancelamentos automaticamente quando estiver conectado; se estiver indisponivel, o painel prepara o envio manual. Em reservas confirmadas, **Alterar data/horario** permite reagendar a cliente dentro da disponibilidade da profissional, sem conflito com outra reserva; ao salvar, abre uma mensagem pronta com a nova data e horario. **Enviar lembrete** continua disponivel para envio manual, independentemente dos lembretes automaticos.
 
 `settings/availability` pode ser lido publicamente para exibir horarios, mas continua editavel apenas por administradoras. `appointments` guarda dados pessoais e pode ser lido apenas por administradoras ativas e pela conta restrita do robo. `bookingSlots` guarda apenas os intervalos ocupados, sem nome ou telefone, e e consultado para montar os horarios livres.
 
@@ -81,6 +81,11 @@ Os envios usam registros em `botDeliveries` para evitar repeticoes. Quando o
 resultado for incerto, o painel avisa e nao repete automaticamente. A
 administradora deve conferir a conversa no WhatsApp antes de marcar como
 conferido ou enviar outra mensagem. O envio pela integracao nao garante entrega.
+Confirmacoes e cancelamentos automaticos ficam em `statusNotices`: uma mensagem
+na fila ainda nao foi enviada. Se o robo parar, o painel permite preparar o
+envio manual cancelando a fila primeiro; quando o resultado for incerto, confira
+a conversa antes de enviar novamente. Uma reserva nao pode ser alterada enquanto
+seu aviso estiver em processamento.
 
 ## Conexao do robo ao painel
 
@@ -109,6 +114,11 @@ producao. A conexao e nao oficial e pode sofrer bloqueios.
    apenas os tipos de envio que pretende usar e salve. O codigo novo do robo
    precisa ser instalado no servidor e o processo reiniciado; publicar apenas
    o site nao atualiza o processo separado.
+
+Para a atualizacao de confirmacoes e cancelamentos, publique primeiro as regras,
+depois o site e reinicie o robo com o codigo atualizado. A opcao comeca desligada;
+ative-a somente depois de validar a nova versao. Um robo antigo nao e tratado
+como capaz de enviar esses avisos e o painel mantem o envio manual.
 
 Se o robo estiver desligado ou sem comunicacao, o painel informa que esta
 offline e nao consegue executar a desvinculacao. Nesse caso, desconecte o

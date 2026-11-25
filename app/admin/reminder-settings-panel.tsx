@@ -20,6 +20,7 @@ const defaultAutomation = {
   newBookings: false,
   summaries: false,
   customers: false,
+  statusNotices: false,
   newText: "Novo pedido de agendamento: {cliente}, {servico}, {data} às {hora}, com {profissional}. Aguardando confirmação.",
   summaryText: "Resumo da agenda:",
   customerText: "Olá {cliente}! Lembramos do seu agendamento de {servico} em {data} às {hora}, com {profissional}.",
@@ -56,7 +57,7 @@ export default function ReminderSettingsPanel() {
             recipientPhone: data.recipientPhone,
             summaries: data.summaries,
             customerReminders: data.customerReminders,
-            automation: { ...(data.automation ?? defaultAutomation), timeZone: "America/Sao_Paulo", lateMinutes: "always" },
+            automation: { ...defaultAutomation, ...data.automation, timeZone: "America/Sao_Paulo", lateMinutes: "always" },
           });
           setRevision(data.revision);
         }
@@ -170,7 +171,9 @@ export default function ReminderSettingsPanel() {
                 <label className="flex items-center gap-2 text-sm"><input checked={settings.automation?.newBookings ?? false} onChange={(event) => updateAutomation({ newBookings: event.target.checked })} type="checkbox" /> Avisar meu número quando chegar um novo pedido</label>
                 <label className="flex items-center gap-2 text-sm"><input checked={settings.automation?.summaries ?? false} onChange={(event) => updateAutomation({ summaries: event.target.checked })} type="checkbox" /> Enviar resumos da agenda</label>
                 <label className="flex items-center gap-2 text-sm"><input checked={settings.automation?.customers ?? false} onChange={(event) => updateAutomation({ customers: event.target.checked })} type="checkbox" /> Enviar lembretes às clientes</label>
+                <label className="flex items-center gap-2 text-sm"><input checked={settings.automation?.statusNotices ?? false} onChange={(event) => updateAutomation({ statusNotices: event.target.checked })} type="checkbox" /> Avisar automaticamente ao confirmar ou cancelar uma reserva</label>
               </div>
+              <p className="mt-2 text-xs text-[#6b625b]">Se o robô estiver indisponível, a mensagem de confirmação ou cancelamento será preparada para envio manual. Os lembretes continuam independentes.</p>
               {settings.automation?.newBookings && <label className="mt-3 block text-sm font-medium">Texto de novos pedidos
                 <textarea className={`${fieldClass} py-2`} onChange={(event) => updateAutomation({ newText: event.target.value })} rows={3} value={settings.automation.newText} />
               </label>}

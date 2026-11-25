@@ -5,8 +5,12 @@ import {
   collection,
   doc,
   onSnapshot,
+  query,
   runTransaction,
+  serverTimestamp,
+  Timestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { firestore } from "../lib/firebase";
 
@@ -25,7 +29,38 @@ export type Appointment = {
   endTime: string;
   slotIds: string[];
   status: "pending" | "confirmed" | "cancelled";
+  statusNoticeId?: string | null;
 };
+
+type StatusNotice = {
+  id: string;
+  appointmentId: string;
+  kind: "confirmed" | "cancelled";
+  date: string;
+  startTime: string;
+  status: "queued" | "sending" | "uncertain" | "needs_manual" | "manual";
+  updatedAt: Timestamp;
+};
+
+function isStatusNotice(value: unknown): value is Omit<StatusNotice, "id"> {
+  return typeof value === "object" && value !== null &&
+    "appointmentId" in value && typeof value.appointmentId === "string" &&
+    "kind" in value && (value.kind === "confirmed" || value.kind === "cancelled") &&
+    "date" in value && typeof value.date === "string" &&
+    "startTime" in value && typeof value.startTime === "string" &&
+    "status" in value && ["queued", "sending", "uncertain", "needs_manual", "manual"].includes(String(value.status)) &&
+    "updatedAt" in value && value.updatedAt instanceof Timestamp;
+}
+
+function robotReady(value: unknown, now: number): boolean {
+  if (typeof value !== "object" || value === null ||
+      !("status" in value) || value.status !== "connected" ||
+      !("statusNotices" in value) || value.statusNotices !== 1 ||
+      !("updatedAt" in value) || !(value.updatedAt instanceof Timestamp) ||
+      ("deliveryError" in value && value.deliveryError != null)) return false;
+  const age = now - value.updatedAt.toMillis();
+  return age >= -30000 && age < 45000;
+}
 
 type Props = {
   onAppointmentsChange: (appointments: Appointment[]) => void;
@@ -98,7 +133,8 @@ function isAppointment(value: unknown): value is Omit<Appointment, "id"> {
     "status" in value &&
     (value.status === "pending" ||
       value.status === "confirmed" ||
-      value.status === "cancelled")
+      value.status === "cancelled") &&
+    (!("statusNoticeId" in value) || value.statusNoticeId === null || typeof value.statusNoticeId === "string")
   );
 }
 
@@ -268,9 +304,50 @@ export default function AppointmentsPanel({ onAppointmentsChange, onLoadStateCha
   const [savingId, setSavingId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [whatsAppFallback, setWhatsAppFallback] = useState("");
+  const [noticeMessage, setNoticeMessage] = useState("");
+  const [notices, setNotices] = useState<StatusNotice[]>([]);
+  const [noticeError, setNoticeError] = useState("");
+  const [noticeBusy, setNoticeBusy] = useState("");
+  const [autoEnabled, setAutoEnabled] = useState(false);
+  const [robotState, setRobotState] = useState<unknown>(null);
+  const [now, setNow] = useState(() => Date.now());
   const [editingId, setEditingId] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 15000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!firestore) return;
+    const unsubscribeSettings = onSnapshot(doc(firestore, "settings", "reminders"), { includeMetadataChanges: true },
+      (snapshot) => setAutoEnabled(!snapshot.metadata.fromCache && snapshot.data()?.automation?.statusNotices === true),
+      () => { setAutoEnabled(false); setNoticeError("Não foi possível verificar as configurações do robô."); });
+    const unsubscribeRobot = onSnapshot(doc(firestore, "botSessions", "whatsapp"), { includeMetadataChanges: true },
+      (snapshot) => setRobotState(snapshot.metadata.fromCache ? null : snapshot.data()),
+      () => { setRobotState(null); setNoticeError("Não foi possível verificar a conexão do robô."); });
+    const unsubscribeNotices = onSnapshot(
+      query(collection(firestore, "statusNotices"), where("status", "in", ["queued", "sending", "uncertain", "needs_manual", "manual"])),
+      { includeMetadataChanges: true },
+      (snapshot) => {
+        const entries: StatusNotice[] = [];
+        for (const item of snapshot.docs) {
+          if (item.metadata.hasPendingWrites) continue;
+          const value = item.data();
+          if (!isStatusNotice(value)) {
+            setNoticeError("Há um aviso de reserva inválido. Consulte o suporte.");
+            return;
+          }
+          entries.push({ id: item.id, ...value });
+        }
+        setNotices(entries);
+      },
+      () => setNoticeError("Não foi possível verificar os avisos automáticos de reservas."),
+    );
+    return () => { unsubscribeSettings(); unsubscribeRobot(); unsubscribeNotices(); };
+  }, []);
 
   useEffect(() => {
     if (!firestore) return;
@@ -331,62 +408,103 @@ export default function AppointmentsPanel({ onAppointmentsChange, onLoadStateCha
   ) {
     const db = firestore;
     if (!db) return;
-    const whatsappWindow = window.open("about:blank", "_blank");
+    const expectAutomatic = autoEnabled && robotReady(robotState, Date.now());
+    const whatsappWindow = expectAutomatic ? null : window.open("about:blank", "_blank");
     if (whatsappWindow) whatsappWindow.opener = null;
     setSavingId(appointment.id);
     setErrorMessage("");
     setWhatsAppFallback("");
+    setNoticeMessage("");
     try {
-      if (status === "cancelled") {
-        const appointmentRef = doc(db, "appointments", appointment.id);
-        await runTransaction(db, async (transaction) => {
-          const currentAppointment = await transaction.get(appointmentRef);
-          if (!currentAppointment.exists()) {
-            throw new Error("APPOINTMENT_MISSING");
-          }
-          const currentData = parseAppointment(
-            appointment.id,
-            currentAppointment.data(),
-          );
-          if (!currentData || currentData.status === "cancelled") {
-            throw new Error("APPOINTMENT_NOT_ACTIVE");
-          }
-          const slotRefs = currentData.slotIds.map((slotId) =>
-            doc(db, "bookingSlots", slotId),
-          );
-          const currentSlots = await Promise.all(
-            slotRefs.map((slotRef) => transaction.get(slotRef)),
-          );
-          currentSlots.forEach((slot, index) => {
-            if (slot.exists()) transaction.delete(slotRefs[index]);
-          });
-          transaction.update(appointmentRef, { status: "cancelled" });
+      const appointmentRef = doc(db, "appointments", appointment.id);
+      const noticeRef = doc(collection(db, "statusNotices"));
+      const result = await runTransaction(db, async (transaction) => {
+        const [currentSnapshot, settingsSnapshot, robotSnapshot] = await Promise.all([
+          transaction.get(appointmentRef),
+          transaction.get(doc(db, "settings", "reminders")),
+          transaction.get(doc(db, "botSessions", "whatsapp")),
+        ]);
+        const current = currentSnapshot.exists() ? parseAppointment(appointment.id, currentSnapshot.data()) : null;
+        if (!current || current.status === "cancelled" ||
+            (status === "confirmed" && current.status !== "pending")) throw new Error("APPOINTMENT_NOT_ACTIVE");
+        const previousRef = current.statusNoticeId ? doc(db, "statusNotices", current.statusNoticeId) : null;
+        const previous = previousRef ? await transaction.get(previousRef) : null;
+        if (previousRef && !previous?.exists()) throw new Error("NOTICE_MISSING");
+        if (previous?.data()?.status === "sending") throw new Error("NOTICE_SENDING");
+        const slotRefs = status === "cancelled" ? current.slotIds.map((id) => doc(db, "bookingSlots", id)) : [];
+        const slots = await Promise.all(slotRefs.map((ref) => transaction.get(ref)));
+        const automatic = settingsSnapshot.data()?.automation?.statusNotices === true &&
+          robotReady(robotSnapshot.data(), Date.now());
+        if (previousRef && ["queued", "needs_manual", "manual"].includes(previous?.data()?.status)) {
+          transaction.update(previousRef, { status: "obsolete", updatedAt: serverTimestamp() });
+        }
+        slots.forEach((slot, index) => { if (slot.exists()) transaction.delete(slotRefs[index]); });
+        transaction.update(appointmentRef, { status, statusNoticeId: automatic ? noticeRef.id : null });
+        if (automatic) transaction.set(noticeRef, {
+          appointmentId: current.id, kind: status, date: current.date, startTime: current.startTime,
+          status: "queued", createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
         });
-      } else {
-        await updateDoc(doc(db, "appointments", appointment.id), {
-          status,
-        });
+        return { automatic, appointment: current };
+      });
+      if (result.automatic) {
+        whatsappWindow?.close();
+        setNoticeMessage("Reserva atualizada. Acompanhe abaixo os avisos pendentes do robô.");
+        return;
       }
-    } catch {
+      const whatsappUrl = getStatusWhatsAppUrl(result.appointment, status);
+      if (whatsappWindow && !whatsappWindow.closed) {
+        try {
+          whatsappWindow.location.replace(whatsappUrl);
+          return;
+        } catch {
+          whatsappWindow.close();
+        }
+      }
+      setWhatsAppFallback(whatsappUrl);
+    } catch (error) {
       whatsappWindow?.close();
       setErrorMessage(
-        "Nao foi possivel atualizar esta reserva. Atualize a pagina e tente novamente.",
+        error instanceof Error && error.message === "NOTICE_SENDING"
+          ? "O robô está enviando um aviso desta reserva. Aguarde o resultado antes de alterá-la."
+          : "Nao foi possivel atualizar esta reserva. Atualize a pagina e tente novamente.",
       );
-      return;
     } finally {
       setSavingId("");
     }
+  }
 
-    const whatsappUrl = getStatusWhatsAppUrl(appointment, status);
-    if (whatsappWindow && !whatsappWindow.closed) {
-      try {
-        whatsappWindow.location.replace(whatsappUrl);
-        return;
-      } catch {
-        whatsappWindow.close();
-      }
+  async function handleNotice(item: StatusNotice, action: "manual" | "reviewed" | "obsolete") {
+    const db = firestore;
+    if (!db || noticeBusy) return;
+    if ((item.status === "uncertain" || item.status === "sending") &&
+        !window.confirm("O resultado é incerto. Confira a conversa no WhatsApp antes de continuar para evitar mensagens duplicadas.")) return;
+    setNoticeBusy(item.id);
+    setNoticeError("");
+    try {
+      await runTransaction(db, async (transaction) => {
+        const ref = doc(db, "statusNotices", item.id);
+        const [snapshot, appointmentSnapshot] = await Promise.all([
+          transaction.get(ref), transaction.get(doc(db, "appointments", item.appointmentId)),
+        ]);
+        const current = snapshot.data();
+        if (!snapshot.exists() || !isStatusNotice(current) || current.status !== item.status) throw new Error("NOTICE_CHANGED");
+        const appointment = appointmentSnapshot.data();
+        const matchesCurrent = appointmentSnapshot.exists() && isAppointment(appointment) &&
+          appointment.statusNoticeId === item.id && appointment.status === item.kind &&
+          appointment.date === item.date && appointment.startTime === item.startTime;
+        if (action === "manual") {
+          if (!matchesCurrent) throw new Error("NOTICE_OBSOLETE");
+        }
+        if (action === "obsolete" && matchesCurrent) throw new Error("NOTICE_CHANGED");
+        transaction.update(ref, { status: action, updatedAt: serverTimestamp() });
+      });
+    } catch (error) {
+      setNoticeError(error instanceof Error && error.message === "NOTICE_OBSOLETE"
+        ? "A reserva mudou. Este aviso não pode ser enviado; descarte-o."
+        : "Não foi possível atualizar o aviso. Aguarde e tente novamente.");
+    } finally {
+      setNoticeBusy("");
     }
-    setWhatsAppFallback(whatsappUrl);
   }
 
   function startEditing(appointment: Appointment) {
@@ -457,6 +575,11 @@ export default function AppointmentsPanel({ onAppointmentsChange, onLoadStateCha
         if (!currentAppointment || currentAppointment.status === "cancelled") {
           throw new Error("APPOINTMENT_NOT_ACTIVE");
         }
+        const previousNoticeRef = currentAppointment.statusNoticeId
+          ? doc(db, "statusNotices", currentAppointment.statusNoticeId) : null;
+        const previousNotice = previousNoticeRef ? await transaction.get(previousNoticeRef) : null;
+        if (previousNoticeRef && !previousNotice?.exists()) throw new Error("NOTICE_MISSING");
+        if (previousNotice?.data()?.status === "sending") throw new Error("NOTICE_SENDING");
         const availabilityData: unknown = availabilitySnapshot.data();
         if (!availabilitySnapshot.exists() || !isAvailability(availabilityData)) {
           throw new Error("SCHEDULE_INVALID");
@@ -534,11 +657,15 @@ export default function AppointmentsPanel({ onAppointmentsChange, onLoadStateCha
         }
 
         const nextEndTime = `${String(Math.floor(end / 60)).padStart(2, "0")}:${String(end % 60).padStart(2, "0")}`;
+        if (previousNoticeRef && ["queued", "needs_manual", "manual"].includes(previousNotice?.data()?.status)) {
+          transaction.update(previousNoticeRef, { status: "obsolete", updatedAt: serverTimestamp() });
+        }
         transaction.update(appointmentRef, {
           date: editDate,
           startTime: editTime,
           endTime: nextEndTime,
           slotIds: newSlotIds,
+          statusNoticeId: null,
         });
         for (const [slotId, slotRef] of allSlotRefs) {
           if (newSlotIds.includes(slotId)) {
@@ -578,6 +705,8 @@ export default function AppointmentsPanel({ onAppointmentsChange, onLoadStateCha
           ? "Esse horario ja foi reservado para essa profissional. Escolha outro."
           : message === "SCHEDULE_UNAVAILABLE"
             ? "A profissional nao atende nesse horario ou a agenda esta bloqueada."
+            : message === "NOTICE_SENDING"
+              ? "O robô está enviando um aviso desta reserva. Aguarde o resultado antes de alterá-la."
             : "Nao foi possivel alterar a reserva. Atualize a pagina e tente novamente.",
       );
     } finally {
@@ -606,9 +735,38 @@ export default function AppointmentsPanel({ onAppointmentsChange, onLoadStateCha
           {errorMessage}
         </p>
       )}
+      {noticeMessage && <p className="mt-4 rounded-lg bg-[#edf8f0] p-3 text-sm text-[#176d3e]" role="status">{noticeMessage}</p>}
+      {noticeError && <p className="mt-4 rounded-lg bg-[#fff1ec] p-3 text-sm text-[#8c3d2c]" role="alert">{noticeError}</p>}
+      {notices.length > 0 && (
+        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          <strong>Avisos de confirmação e cancelamento</strong>
+          <p className="mt-1">Na fila não significa enviado. Se o resultado for incerto, confira a conversa antes de enviar manualmente.</p>
+          <ul className="mt-2 space-y-3">
+            {notices.map((item) => {
+              const appointment = appointments.find((entry) => entry.id === item.appointmentId);
+              const matches = appointment && appointment.statusNoticeId === item.id &&
+                appointment.status === item.kind && appointment.date === item.date && appointment.startTime === item.startTime;
+              const canPrepare = item.status === "queued" || item.status === "needs_manual" ||
+                item.status === "uncertain" || (item.status === "sending" && now - item.updatedAt.toMillis() > 125000);
+              return (
+                <li key={item.id}>
+                  <span>{item.kind === "confirmed" ? "Confirmação" : "Cancelamento"} — {appointment?.customerName ?? "reserva indisponível"} — {formatDate(item.date)} às {item.startTime}:{" "}
+                    {item.status === "queued" ? "na fila" : item.status === "sending" ? "em processamento" :
+                      item.status === "uncertain" ? "resultado incerto" : item.status === "needs_manual" ? "precisa de envio manual" : "aguardando envio manual"}
+                  </span>
+                  {canPrepare && matches && <button className="ml-2 min-h-10 font-semibold underline disabled:opacity-60" disabled={!!noticeBusy} onClick={() => void handleNotice(item, "manual")} type="button">Preparar envio manual</button>}
+                  {item.status === "manual" && matches && <a className="ml-2 font-semibold underline" href={getStatusWhatsAppUrl(appointment, item.kind)} rel="noopener noreferrer" target="_blank">Abrir mensagem no WhatsApp</a>}
+                  {(item.status === "manual" || item.status === "uncertain") && <button className="ml-2 min-h-10 font-semibold underline disabled:opacity-60" disabled={!!noticeBusy} onClick={() => void handleNotice(item, "reviewed")} type="button">Já conferi</button>}
+                  {!matches && item.status !== "sending" && item.status !== "uncertain" && <button className="ml-2 min-h-10 font-semibold underline disabled:opacity-60" disabled={!!noticeBusy} onClick={() => void handleNotice(item, "obsolete")} type="button">Descartar aviso antigo</button>}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
       {whatsAppFallback && (
         <p className="mt-4 rounded-lg bg-[#edf8f0] p-3 text-sm text-[#176d3e]" role="status">
-          Horario alterado. Avise a cliente pelo WhatsApp:{" "}
+          Avise a cliente pelo WhatsApp:{" "}
           <a
             className="font-semibold underline"
             href={whatsAppFallback}
@@ -704,7 +862,7 @@ export default function AppointmentsPanel({ onAppointmentsChange, onLoadStateCha
                       onClick={() => void updateStatus(appointment, "confirmed")}
                       type="button"
                     >
-                      Confirmar e avisar
+                      {autoEnabled && robotReady(robotState, now) ? "Confirmar e avisar pelo robô" : "Confirmar e avisar"}
                     </button>
                   )}
                   <button
@@ -715,7 +873,7 @@ export default function AppointmentsPanel({ onAppointmentsChange, onLoadStateCha
                   >
                     {savingId === appointment.id
                       ? "Salvando..."
-                      : "Cancelar e avisar"}
+                      : autoEnabled && robotReady(robotState, now) ? "Cancelar e avisar pelo robô" : "Cancelar e avisar"}
                   </button>
                 </div>
               </div>
