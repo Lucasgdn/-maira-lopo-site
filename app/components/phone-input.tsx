@@ -9,18 +9,25 @@ type Props = Omit<InputHTMLAttributes<HTMLInputElement>, "onChange" | "value" | 
 };
 
 export default function PhoneInput({ value, onChange, ...props }: Props) {
-  const [error, setError] = useState("");
+  const [notice, setNotice] = useState<{ message: string; blocking: boolean } | null>(null);
 
-  function update(input: HTMLInputElement, raw: string, cursor: number) {
+  function update(input: HTMLInputElement, raw: string, cursor: number, singleDigit = false) {
     if (exceedsBrazilianPhoneLength(raw)) {
-      const message = "Use até 11 dígitos com DDD. O número excedente não foi inserido; ajuste o campo.";
-      input.value = value;
+      if (singleDigit && !notice?.blocking && raw.slice(0, cursor - 1) + raw.slice(cursor) === value) {
+        input.value = value;
+        input.setSelectionRange(cursor - 1, cursor - 1);
+        input.setCustomValidity("");
+        setNotice({ message: "Limite de 11 dígitos com DDD. O dígito adicional não foi inserido.", blocking: false });
+        return;
+      }
+      const message = "Use até 11 dígitos com DDD. Corrija o número para continuar.";
       input.setCustomValidity(message);
-      setError(message);
+      setNotice({ message, blocking: true });
+      onChange(formatBrazilianPhone(raw));
       return;
     }
     input.setCustomValidity("");
-    setError("");
+    setNotice(null);
     const formatted = formatBrazilianPhone(raw);
     const digitsBeforeCursor = raw.slice(0, cursor).replace(/\D/g, "").length;
     let position = formatted.startsWith("+") && raw.slice(0, cursor).includes("+") ? 1 : 0;
@@ -39,7 +46,10 @@ export default function PhoneInput({ value, onChange, ...props }: Props) {
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const input = event.currentTarget;
-    update(input, input.value, input.selectionStart ?? input.value.length);
+    const nativeEvent = event.nativeEvent;
+    const singleDigit = nativeEvent instanceof InputEvent &&
+      nativeEvent.inputType === "insertText" && /^\d$/.test(nativeEvent.data ?? "");
+    update(input, input.value, input.selectionStart ?? input.value.length, singleDigit);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -60,8 +70,8 @@ export default function PhoneInput({ value, onChange, ...props }: Props) {
 
   return (
     <>
-      <input {...props} aria-invalid={error ? true : props["aria-invalid"]} inputMode="tel" onChange={handleChange} onKeyDown={handleKeyDown} type="tel" value={value} />
-      {error && <span className="mt-1 block text-xs font-normal normal-case tracking-normal text-red-700" role="alert">{error}</span>}
+      <input {...props} aria-invalid={notice?.blocking ? true : props["aria-invalid"]} inputMode="tel" onChange={handleChange} onKeyDown={handleKeyDown} type="tel" value={value} />
+      {notice && <span className="mt-1 block text-xs font-normal normal-case tracking-normal text-red-700" role="alert">{notice.message}</span>}
     </>
   );
 }
