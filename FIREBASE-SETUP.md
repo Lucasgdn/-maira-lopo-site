@@ -55,7 +55,7 @@ editar os horarios. Os atalhos semanais ficam recolhidos e o botao para salvar
 acompanha a tela no celular. As alteracoes so entram em vigor depois de salvar.
 Os campos ficam empilhados no celular e passam para duas colunas em telas maiores.
 
-Os botoes **Agendar** dos cards abrem o calendario publico. Cada card informa a duracao do servico; o sistema oferece inicios em intervalos de 15 minutos e reserva o tempo exato do servico em blocos internos de 5 minutos. Os horarios respeitam expediente, intervalos, eventos, excecoes e reservas existentes. A gravacao usa uma transacao do Firestore para impedir que duas clientes ocupem simultaneamente o mesmo intervalo.
+Os botoes **Agendar** dos cards abrem o calendario publico. Cada card informa a duracao do servico; o sistema oferece inicios em intervalos de 15 minutos e reserva o tempo exato do servico em blocos internos de 5 minutos. Os horarios respeitam expediente, intervalos, eventos, excecoes e reservas existentes. A gravacao usa uma transacao do Firestore para impedir que duas clientes ocupem simultaneamente o mesmo intervalo. Os campos de telefone formatam numeros brasileiros com DDD durante a digitacao, sem alterar o formato salvo no Firebase.
 
 Quando ha mais de uma profissional cadastrada, a cliente escolhe com quem deseja agendar antes de consultar as datas e horarios. A disponibilidade exibida e os bloqueios de reserva sao daquela profissional. O painel combina as reservas na agenda semanal, identifica o nome da profissional e permite filtrar a visualizacao por pessoa. Reservas simultaneas aparecem lado a lado na agenda semanal.
 

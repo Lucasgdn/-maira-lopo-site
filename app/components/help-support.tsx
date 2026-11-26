@@ -36,7 +36,7 @@ export default function HelpSupport({ area }: Props) {
             uma data e um horário disponíveis.
           </p>
           <p>
-            Informe seu nome e WhatsApp para enviar o pedido. A Maira entrará em contato
+            Informe seu nome e WhatsApp com DDD para enviar o pedido. O número é formatado automaticamente. A Maira entrará em contato
             para confirmar seu horário.
           </p>
         </div>

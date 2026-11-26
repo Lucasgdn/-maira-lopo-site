@@ -1,3 +1,5 @@
+import { normalizeBrazilianPhone } from "./phone.mjs";
+
 export type SummarySchedule = {
   sendTime: string;
   day: "today" | "tomorrow";
@@ -50,14 +52,13 @@ function isAutomation(value: unknown): value is NonNullable<ReminderSettings["au
 }
 
 export function normalizeRecipientPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  return digits.length === 10 || digits.length === 11 ? `55${digits}` : digits;
+  return normalizeBrazilianPhone(phone);
 }
 
 export function validateReminderSettings(settings: ReminderSettings): string | null {
   const phone = normalizeRecipientPhone(settings.recipientPhone);
   const automation = settings.automation;
-  if ((phone && !/^55\d{10,11}$/.test(phone)) ||
+  if ((settings.recipientPhone.trim() && !/^55\d{10,11}$/.test(phone)) ||
       ((settings.summaries.length > 0 || automation?.newBookings) && !phone)) {
     return "Informe um WhatsApp válido com DDD para receber os resumos.";
   }

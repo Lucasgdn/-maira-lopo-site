@@ -3,6 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { doc, getDocFromServer, runTransaction, serverTimestamp, Timestamp } from "firebase/firestore";
 import { firestore } from "../lib/firebase";
+import PhoneInput from "../components/phone-input";
+import { formatBrazilianPhone } from "../lib/phone.mjs";
 import {
   isSavedReminderSettings,
   normalizeRecipientPhone,
@@ -54,7 +56,7 @@ export default function ReminderSettingsPanel() {
             return;
           }
           setSettings({
-            recipientPhone: data.recipientPhone,
+            recipientPhone: formatBrazilianPhone(data.recipientPhone),
             summaries: data.summaries,
             customerReminders: data.customerReminders,
             automation: { ...defaultAutomation, ...data.automation, timeZone: "America/Sao_Paulo", lateMinutes: "always" },
@@ -190,10 +192,10 @@ export default function ReminderSettingsPanel() {
               <p className="mt-1 text-sm text-[#6b625b]">O resumo será enviado ao seu número particular e incluirá os atendimentos das profissionais no período escolhido.</p>
               <label className="mt-4 block max-w-sm text-sm font-medium">
                 Seu WhatsApp particular com DDD
-                <input autoComplete="tel" className={fieldClass} onChange={(event) => {
-                  setSettings((current) => ({ ...current, recipientPhone: event.target.value }));
+                <PhoneInput autoComplete="tel" className={fieldClass} onChange={(value) => {
+                  setSettings((current) => ({ ...current, recipientPhone: value }));
                   setMessage("");
-                }} placeholder="(19) 99999-9999" type="tel" value={settings.recipientPhone} />
+                }} placeholder="(19) 99999-9999" value={settings.recipientPhone} />
               </label>
               <div className="mt-4 space-y-4">
                 {settings.summaries.map((summary, index) => (

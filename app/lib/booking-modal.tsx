@@ -12,6 +12,8 @@ import {
   where,
 } from "firebase/firestore";
 import { firestore } from "./firebase";
+import { normalizeBrazilianPhone } from "./phone.mjs";
+import PhoneInput from "../components/phone-input";
 
 type Service = {
   servico: string;
@@ -224,11 +226,6 @@ function getLockTimes(start: number, duration: number) {
   );
 }
 
-function phoneDigits(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  return digits.startsWith("55") ? digits : `55${digits}`;
-}
-
 export default function BookingModal({ service, onClose }: Props) {
   const [availability, setAvailability] = useState<Availability | null>(null);
   const [availabilityError, setAvailabilityError] = useState(
@@ -423,12 +420,11 @@ export default function BookingModal({ service, onClose }: Props) {
       return;
     }
     const normalizedName = customerName.trim().replace(/\s+/g, " ");
-    const normalizedPhone = phoneDigits(customerPhone);
+    const normalizedPhone = normalizeBrazilianPhone(customerPhone);
     if (
       normalizedName.length < 2 ||
       normalizedName.length > 100 ||
-      normalizedPhone.length < 12 ||
-      normalizedPhone.length > 13
+      !/^55\d{10,11}$/.test(normalizedPhone)
     ) {
       setErrorMessage("Informe seu nome e um numero de celular com DDD.");
       return;
@@ -804,17 +800,13 @@ export default function BookingModal({ service, onClose }: Props) {
                     />
                   </label>
                   <label className="block text-xs font-semibold uppercase tracking-wide text-[#765b4a]">
-                    WhatsApp / telefone
-                    <input
+                    WhatsApp / telefone com DDD
+                    <PhoneInput
                       autoComplete="tel"
                       className={modalInputClass}
-                      inputMode="tel"
-                      maxLength={20}
-                      minLength={10}
-                      onChange={(event) => setCustomerPhone(event.target.value)}
+                      onChange={setCustomerPhone}
                       placeholder="(16) 99999-9999"
                       required
-                      type="tel"
                       value={customerPhone}
                     />
                   </label>
