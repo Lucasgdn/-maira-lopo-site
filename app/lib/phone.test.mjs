@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatBrazilianPhone, normalizeBrazilianPhone } from "./phone.mjs";
+import { exceedsBrazilianPhoneLength, formatBrazilianPhone, normalizeBrazilianPhone } from "./phone.mjs";
 
 test("formats Brazilian mobile and landline numbers while typing", () => {
   assert.equal(formatBrazilianPhone(""), "");
@@ -26,4 +26,14 @@ test("does not hide extra digits or reinterpret an explicit foreign code", () =>
   assert.equal(formatBrazilianPhone("1198765432199"), "(11) 98765-432199");
   assert.equal(normalizeBrazilianPhone(formatBrazilianPhone("1198765432199")), "551198765432199");
   assert.equal(normalizeBrazilianPhone(formatBrazilianPhone("+14155551234")), "14155551234");
+});
+
+test("detects excess digits with and without the Brazilian country code", () => {
+  assert.equal(exceedsBrazilianPhoneLength("(19) 99724-3537"), false);
+  assert.equal(exceedsBrazilianPhoneLength("(19) 99724-35377"), true);
+  assert.equal(exceedsBrazilianPhoneLength("(55) 98765-43210"), true);
+  assert.equal(exceedsBrazilianPhoneLength("+55 (19) 99724-3537"), false);
+  assert.equal(exceedsBrazilianPhoneLength("5519997243537"), false);
+  assert.equal(exceedsBrazilianPhoneLength("+55 (19) 99724-35377"), true);
+  assert.equal(exceedsBrazilianPhoneLength("55199972435377"), true);
 });

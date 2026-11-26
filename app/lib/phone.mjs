@@ -24,3 +24,10 @@ export function formatBrazilianPhone(phone) {
   const rest = number.slice(firstPartLength);
   return `${prefix}(${area}) ${firstPart}${rest ? `-${rest}` : ""}`;
 }
+
+/** @param {string} phone */
+export function exceedsBrazilianPhoneLength(phone) {
+  const formatted = formatBrazilianPhone(phone);
+  const digits = formatted.replace(/\D/g, "");
+  return digits.length > (formatted.startsWith("+55") ? 13 : 11);
+}
